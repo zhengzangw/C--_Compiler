@@ -1,0 +1,9 @@
+Test/
+parser
+scanner
+lex.yy.c
+*.lex.yy.c
+syntax.yy.c
+syntax.tab.c
+syntax.tab.h
+*.syntax.tab.c
