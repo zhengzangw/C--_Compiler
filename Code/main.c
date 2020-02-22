@@ -1,17 +1,13 @@
-#include "stdio.h"
-#ifdef DEBUG
-    extern int yydebug;
-#endif
-
-void yyrestart (FILE *input_file  );
-int yyparse (void);
-
-int error_num = 0;
-int throw_error(char type, int lineno, char* msg){
-    error_num++;
-    fprintf(stderr, "Error type %c at Line %d: %s\n", type, lineno, msg);
-    return 0;
-}
+/**
+ *
+ * C-- Compiler, Labs of NJU course Principles and Techiques of Compiler
+ *
+ * Author: Zangwei Zheng, zhengzangw@163.com
+ *
+ **/
+#include "common.h"
+#include "error.h"
+#include "ast.h"
 
 int main(int argc, char **argv){
     if (argc <= 1) return 1;
@@ -25,5 +21,10 @@ int main(int argc, char **argv){
     yydebug = 1;
 #endif
     yyparse();
+    if (error_num==0) ast_print(ast_root, 0);
     return 0;
 }
+
+/*--------------------------------------------------------------------
+ * main.c
+ *------------------------------------------------------------------*/
