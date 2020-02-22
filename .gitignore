@@ -1,9 +1,8 @@
-Test/
-parser
-scanner
-lex.yy.c
-*.lex.yy.c
-syntax.yy.c
-syntax.tab.c
-syntax.tab.h
-*.syntax.tab.c
+/Code/*
+!/Code/*.c
+!/Code/*.h
+!/Code/lexical.l
+!/Code/syntax.y
+!/Code/Makefile
+/Code/lex.yy.c
+/Code/syntax.tab.*

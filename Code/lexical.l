@@ -1,15 +1,23 @@
 %option yylineno
 
 %{
-void error();
-int number(char *, int);
-float floatvalue(char *, int);
+    #include "syntax.tab.h"
+    void error();
+    int number(char *, int);
+    float floatvalue(char *, int);
+    int yycolumn = 1;
+    #define YY_USER_ACTION \
+        yylloc.first_line = yylloc.last_line = yylineno; \
+        yylloc.first_column = yycolumn; \
+        yylloc.last_column = yycolumn + yyleng - 1; \
+        yycolumn += yyleng;
 %}
+
 
 relop >|<|>=|<=|<=|==|!=
 type int|float
-
-whitespace [ \t\r\a\n]+
+newline \n
+whitespace [ \t\r\a]+
 digit [0-9]
 letter [_a-zA-Z]
 id {letter}[_a-zA-Z0-9]*
@@ -33,54 +41,75 @@ err_id {digit}+{id}
 
 %%
 
+{newline} { yycolumn = 1; }
 {whitespace} {}
-
-"struct" { printf("STRUCT\n"); }
-"return" { printf("RETURN\n"); }
-"if" { printf("IF\n"); }
-"else" { printf("ELSE\n"); }
-"while" { printf("WHILE\n"); }
-{type} { printf("TYPE: %s\n", yytext); }
-
-{relop} { printf("RELOP\n"); }
-";" { printf("SEMI\n"); }
-"," { printf("COMMA\n"); }
-"=" { printf("ASSIGNOP\n"); }
-"+" { printf("PLUS\n"); }
-"-" { printf("MINUS\n"); }
-"*" { printf("STAR\n"); }
-"/" { printf("DIV\n"); }
-"&&" { printf("AND\n"); }
-"||" { printf("OR\n"); }
-"." { printf("DOT\n"); }
-"!" { printf("NOT\n"); }
-"(" { printf("LP\n"); }
-")" { printf("RP\n"); }
-"[" { printf("LB\n"); }
-"]" { printf("RB\n"); }
-"{" { printf("LC\n"); }
-"}" { printf("RC\n"); }
+"struct" { return STRUCT; }
+"return" { return RETURN; }
+"if" { return IF; }
+"else" { return ELSE; }
+"while" { return WHILE; }
+{type} { 
+    //strcpy(yylval, yytext);
+    return TYPE;
+}
+{relop} { return RELOP; }
+";" { return SEMI; }
+"," { return COMMA; }
+"=" { return ASSIGNOP; }
+"+" { return PLUS; }
+"-" { return MINUS; }
+"*" { return STAR; }
+"/" { return DIV; }
+"&&" { return AND; }
+"||" { return OR; }
+"." { return DOT; }
+"!" { return NOT; }
+"(" { return LP; }
+")" { return RP; }
+"[" { return LB; }
+"]" { return RB; }
+"{" { return LC; }
+"}" { return RC; }
 
 {err_int8}  { error("Illegal octal number"); }
 {err_int16} { error("Illegal hexadecimal number"); }
 {err_float} { error("Illegal float point number"); }
 {err_sci}   { error("Illegal float point number"); }
 
-{int10} { printf("INT: %d\n", number(yytext, 10)); }
-{int8}  { printf("INT: %d\n", number(yytext, 8)); }
-{int16} { printf("INT: %d\n", number(yytext, 16)); }
-{float} { printf("FLOAT: %f\n", floatvalue(yytext, 0)); }
-{sci} { printf("FLOAT: %f\n", floatvalue(yytext, 1)); }
+{int10} { 
+    yylval = number(yytext, 10);
+    return INT;
+}
+{int8}  { 
+    yylval = number(yytext, 8);
+    return INT;
+}
+{int16} { 
+    yylval = number(yytext, 16);
+    return INT;
+}
+
+{float} { 
+    yylval = floatvalue(yytext, 0);
+    return FLOAT;
+}
+{sci} { 
+    yylval = floatvalue(yytext, 1);
+    return FLOAT;
+}
 
 {err_id} { error("Illegal id"); }
-{id} { printf("ID: %s\n", yytext); }
+{id} {
+    //strcpy(yylval, yytext);
+    return ID;
+}
 
 . { error("Mysterious characters"); }
 
 %%
 
 void error(const char* msg){
-    printf("Error type A at Line %d: %s \'%s\'\n", yylineno, msg, yytext);
+    fprintf(stderr, "Error type A at Line %d: %s \'%s\'\n", yylineno, msg, yytext);
 }
 
 int number(char *digits, int base){
