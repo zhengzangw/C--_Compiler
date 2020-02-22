@@ -73,7 +73,12 @@ err_id                          {digit}+{id}
 
 %%
 
-{newline}                       { yycolumn = 1; newline_error = 1; }
+{newline}                       { if (newline_error && fallback_error){
+                                    throw_fallback_error();
+                                  }
+                                  yycolumn = newline_error = 1;
+                                  fallback_error = 0;
+                                }
 {whitespace}                    {}
 "//"                            { comment_line(); }
 "/*"                            { int status = comment_block();

@@ -78,16 +78,20 @@ ExtDefList
     : /* empty */
       { $$ = NULL; }
     | error
-      { errorB("something is totally wrong"); }
+      { errorB("something is wrong"); }
     | ExtDef ExtDefList
       { generate(ExtDefList,$$,@$,2,$1,$2); }
     ;
 ExtDef          
     : Specifier ExtDecList SEMI
       { generate(ExtDef,$$,@$,3,$1,$2,$3); }
+    | Specifier ExtDecList Specifier
+      { errorB("missing \";\""); }
     | Specifier SEMI
       { generate(ExtDef,$$,@$,2,$1,$2); }
     | error SEMI
+      { errorB("something wrong in global definition"); }
+    | error RC
       { errorB("something wrong in global definition"); }
     | Specifier FunDec CompSt
       { generate(ExtDef,$$,@$,3,$1,$2,$3); }
@@ -98,7 +102,7 @@ ExtDecList
     | VarDec COMMA ExtDecList
       { generate(ExtDecList,$$,@$,3,$3); }
     | error COMMA ExtDecList
-      { errorB("something wrong in global declare list"); }
+      { errorB("something wrong in global definition"); }
     ;
 
 /* Specifier */
@@ -112,7 +116,7 @@ StructSpecifier
     : STRUCT OptTag LC DefList RC
       { generate(StructSpecifier,$$,@$,5,$1,$2,$3,$4,$5); }
     | STRUCT OptTag LC DefList error RC
-      { errorB("something wrong in definition of structure");}
+      { errorB("something wrong in definition of struct");}
     | STRUCT Tag
       { generate(StructSpecifier,$$,@$,2,$1,$2); }
     ;
@@ -137,8 +141,6 @@ VarDec
       { generate(VarDec,$$,@$,4,$1,$2,$3,$4); }
     | VarDec LB error SEMI
       { errorB("missing \"]\""); }
-    | error
-      { errorB("Not a valid variable definition");}
     ;
 FunDec          
     : ID LP VarList RP
@@ -146,11 +148,11 @@ FunDec
     | ID LP VarList error RP
       { errorB("something wrong in the definition of structure"); }
     | ID LP VarList error LC
-      { errorB("missing \")\""); }
+      { errorB("something wrong in the definition of structure"); }
     | ID LP RP
       { generate(FunDec,$$,@$,3,$1,$2,$3); }
     | ID LP error LC
-      { errorB("missing \")\""); }
+      { errorB("something wrong in the definition of structure"); }
     ;
 VarList         
     : ParamDec COMMA VarList
@@ -169,16 +171,12 @@ ParamDec
 CompSt
     : LC DefList StmtList RC
       { generate(CompSt,$$,@$,4,$1,$2,$3,$4); }
-    | LC error StmtList RC
-      { errorB("wrong definitions in block"); }
-    | LC DefList error RC
+    | error RC
       { errorB("wrong statements in block"); }
     ;
 StmtList
     : /* empty */
       { $$ = NULL; }
-    | error
-      { errorB("something wrong in statements"); }
     | Stmt StmtList
       { generate(StmtList,$$,@$,2,$1,$2); }
     ;
@@ -186,13 +184,13 @@ Stmt
     : Exp SEMI
       { generate(Stmt,$$,@$,2,$1,$2); }
     | error SEMI
-      { errorB("Expression error"); }
+      { errorB("expression error"); }
     | CompSt
       { generate(Stmt,$$,@$,1,$1); }
     | RETURN Exp SEMI
       { generate(Stmt,$$,@$,3,$1,$2,$3); }
     | RETURN error SEMI
-      { errorB("Return error"); }
+      { errorB("return error"); }
     | IF LP Exp RP Stmt 
       %prec LOWER_THAN_ELSE
       { generate(Stmt,$$,@$,5,$1,$2,$3,$4,$5); }
@@ -213,8 +211,6 @@ DefList
       { $$ = NULL; }
     | Def DefList
       { generate(DefList,$$,@$,2,$1,$2); }
-    | error
-      { errorB("something wrong in definitions"); }
     ;
 Def
     : Specifier DecList SEMI
@@ -235,6 +231,8 @@ Dec
       { generate(Dec,$$,@$,1,$1); }
     | VarDec ASSIGNOP Exp
       { generate(Dec,$$,@$,3,$1,$2,$3); }
+    | VarDec ASSIGNOP SEMI
+      { errorB("initial value not given"); }
     ;
 
 /* Expression */
@@ -277,7 +275,7 @@ Exp
       { generate(Exp,$$,@$,1,$1); }
     | FLOAT
       { generate(Exp,$$,@$,1,$1); }
-    | error
+    | error RP
       { errorB("expression error"); }
     ;
 Args            
@@ -294,7 +292,7 @@ Args
  * 
  *----------------------------------------------------------------------------*/
 int yyerror(char* msg){ 
-  /* empty */
+  errorF();
 }
 
 /*--------------------------------------------------------------------

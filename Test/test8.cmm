@@ -1,0 +1,20 @@
+/** test8
+ *  Type A error
+ */
+
+aa
+bb
+cc
+
+struct {
+    p = 3 + 5;
+};
+
+int main(){
+    a[5,3] = 1.5;
+    if (a[1][2] == 0) i = 1 else i = 0;
+    int i = 0;
+    while (int i);
+    int i = 0;
+    int a(){}
+}

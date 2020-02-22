@@ -1,0 +1,17 @@
+/** test5
+ *  correct
+ *	AST test
+ *  option: comment
+ */
+
+//header line
+/*
+    it seems that you have finished
+    this part
+*/
+int main(){/* hi */
+    // int}}
+    /* /* */
+    /* // */
+}
+/**/

@@ -1,5 +1,10 @@
-int main()
+int inc()
 {
-	int i = 1;
-	int j = ~i;
+    int i = f(a,b);
+    i = i + 1;
 }
+
+/** test1
+ *  correct
+ *	AST test
+ */

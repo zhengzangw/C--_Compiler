@@ -1,5 +1,17 @@
-int inc()
+/** test3
+ *  correct
+ *	AST test
+ *  option: int
+ */
+
+int main()
 {
-    int ifi;
-    i = i + 1;
+    int j = 10032;
+    //octal
+    int i = 0123;
+    int j = 0237;
+    int i = 001;
+    //hex
+    int j = 0x3F;
+    int i = 0XFF32;
 }
