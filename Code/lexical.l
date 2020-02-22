@@ -75,6 +75,10 @@ err_id                          {digit}+{id}
 
 {newline}                       { yycolumn = 1; newline_error = 1; }
 {whitespace}                    {}
+"//"                            { comment_line(); }
+"/*"                            { int status = comment_block();
+                                  if (status == 1) errorA("unterminated comment");
+                                }
 "struct"                        { handle(STRUCT); }
 "return"                        { handle(RETURN); }
 "if"                            { handle(IF); }
@@ -174,6 +178,24 @@ char* floatvalue(char *digits, int type){
     char* ret = (char *)malloc(32);
     sprintf(ret, "%f", ans);
     handle(ret);
+}
+
+int comment_line(){
+    char c = input();
+    while (c != '\n' && c != EOF) c = input();
+    return 0;
+}
+
+int comment_block(){
+    char c1 = input(), c2;
+    if (c1 != EOF) c2 = input(); else return 1;
+    while (c2 != EOF){
+        if (c1 == '*' && c2 == '/') return 0;
+        char t = input();
+        c1 = c2;
+        c2 = t;
+    }
+    return 1;
 }
 
 /*--------------------------------------------------------------------

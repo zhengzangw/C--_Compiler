@@ -10,6 +10,8 @@
 
 char* number(char *, int);
 char* floatvalue(char *, int);
+int comment_line();
+int comment_block();
 
 #endif
 
