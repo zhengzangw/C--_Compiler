@@ -1,0 +1,8 @@
+int main()
+{
+    int ifi = 09;
+    int j = 0x3G;
+    int i = f0;
+    int i = 0xx;
+    int i = 0012a;
+}

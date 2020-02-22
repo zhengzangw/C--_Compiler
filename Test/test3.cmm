@@ -1,0 +1,5 @@
+int inc()
+{
+    int ifi;
+    i = i + 1;
+}

@@ -1,0 +1,10 @@
+int main()
+{
+    int i = 0123;
+    int j = 0x3F;
+    int i = 000237;
+    int j = 0x00fF34;
+    int i = 123;
+    int j = 0X0;
+    int i = 000;
+}
