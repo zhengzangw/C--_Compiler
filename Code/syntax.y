@@ -1,7 +1,9 @@
 %locations
 %{
     #include "lex.yy.c"
+        #define lex_throw_error(msg) throw_error('B', yylineno, msg)
     int yyerror(char* msg);
+    int throw_error();
 %}
 
 %token INT
@@ -117,5 +119,5 @@ Args            : Exp COMMA Args
 %%
 
 int yyerror(char* msg){
-    fprintf(stderr, "Error type B at Line %d: %s\n", yylineno, msg);
+    /* empty */
 }

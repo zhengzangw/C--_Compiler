@@ -1,8 +1,8 @@
 int main(){
     float j = 43.e-4;
     float i = 1.05e-4;
-    float j = 0.7
-    float i = 12.43;
+    float j = 000.7;
+    float i = 12.430;
     float j = 9.00;
     float i = 01.23E12;
     float k=.5E03;

@@ -2,15 +2,17 @@
 
 %{
     #include "syntax.tab.h"
-    void error();
-    int number(char *, int);
-    float floatvalue(char *, int);
-    int yycolumn = 1;
     #define YY_USER_ACTION \
         yylloc.first_line = yylloc.last_line = yylineno; \
         yylloc.first_column = yycolumn; \
         yylloc.last_column = yycolumn + yyleng - 1; \
         yycolumn += yyleng;
+    #define lex_throw_error(msg) throw_error('A', yylineno, msg)
+
+    int throw_error();
+    int number(char *, int);
+    float floatvalue(char *, int);
+    int yycolumn = 1;
 %}
 
 
@@ -71,10 +73,10 @@ err_id {digit}+{id}
 "{" { return LC; }
 "}" { return RC; }
 
-{err_int8}  { error("Illegal octal number"); }
-{err_int16} { error("Illegal hexadecimal number"); }
-{err_float} { error("Illegal float point number"); }
-{err_sci}   { error("Illegal float point number"); }
+{err_int8}  { lex_throw_error("Illegal octal number"); }
+{err_int16} { lex_throw_error("Illegal hexadecimal number"); }
+{err_float} { lex_throw_error("Illegal float point number"); }
+{err_sci}   { lex_throw_error("Illegal float point number"); }
 
 {int10} { 
     yylval = number(yytext, 10);
@@ -98,19 +100,15 @@ err_id {digit}+{id}
     return FLOAT;
 }
 
-{err_id} { error("Illegal id"); }
+{err_id} { lex_throw_error("Illegal id"); }
 {id} {
     //strcpy(yylval, yytext);
     return ID;
 }
 
-. { error("Mysterious characters"); }
+. { lex_throw_error("Mysterious characters"); }
 
 %%
-
-void error(const char* msg){
-    fprintf(stderr, "Error type A at Line %d: %s \'%s\'\n", yylineno, msg, yytext);
-}
 
 int number(char *digits, int base){
     int len = strlen(digits);
