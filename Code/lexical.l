@@ -148,10 +148,10 @@ char* number(char *digits, int base){
 }
 
 char* floatvalue(char *digits, int type){
-    float ans = 0;
+    double ans = 0;
     int len = strlen(digits);
     int part1 = 0;
-    float part2 = 0;
+    double part2 = 0;
     int i = 0;
     for (;i<len;++i){
         char c = digits[i];
@@ -159,13 +159,13 @@ char* floatvalue(char *digits, int type){
         else break;
     }
     i++;
-    float base = 1;
+    double base = 1;
     for (;i<len && digits[i]!='E' && digits[i]!='e';++i){
         char c = digits[i];
         base /= 10;
         part2 += (c - '0') * base;
     }
-    ans = (float)part1 + part2;
+    ans = (double)part1 + part2;
     
     if (type==1){
         int sgn = (digits[i+1]=='-') ? -1 : 1;
@@ -176,12 +176,13 @@ char* floatvalue(char *digits, int type){
             i++;
         }
         int index = atoi(digits+i);
-        for (int j=0;j<index;++j) 
+        for (int j=0;j<index;++j) {
             ans = (sgn == 1) ? ans*10 : ans/10;
+        }
     }
 
     char* ret = (char *)malloc(32);
-    sprintf(ret, "%f", ans);
+    sprintf(ret, "%lf", ans);
     handle(ret);
 }
 

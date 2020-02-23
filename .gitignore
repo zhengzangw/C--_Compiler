@@ -6,3 +6,4 @@
 !/Code/Makefile
 /Code/lex.yy.c
 /Code/syntax.tab.*
+parser

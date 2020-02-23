@@ -100,7 +100,7 @@ ExtDecList
     : VarDec
       { generate(ExtDecList,$$,@$,1,$1); }
     | VarDec COMMA ExtDecList
-      { generate(ExtDecList,$$,@$,3,$3); }
+      { generate(ExtDecList,$$,@$,3,$1,$2,$3); }
     | error COMMA ExtDecList
       { errorB("something wrong in global definition"); }
     ;
@@ -201,7 +201,7 @@ Stmt
     | IF LP Exp RP error ELSE Stmt
       { errorB("missing \";\""); }
     | WHILE LP Exp RP Stmt
-      { generate(WHILE,$$,@$,5,$1,$2,$3,$4,$5); }
+      { generate(Stmt,$$,@$,5,$1,$2,$3,$4,$5); }
     | WHILE LP error Stmt
       { errorB("missing \")\""); }
 
