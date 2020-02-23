@@ -7,3 +7,4 @@
 /Code/lex.yy.c
 /Code/syntax.tab.*
 parser
+*.pdf

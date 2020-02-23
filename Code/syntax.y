@@ -116,7 +116,7 @@ StructSpecifier
     : STRUCT OptTag LC DefList RC
       { generate(StructSpecifier,$$,@$,5,$1,$2,$3,$4,$5); }
     | STRUCT OptTag LC DefList error RC
-      { errorB("something wrong in definition of struct");}
+      { errorB("something wrong in the definition of structure");}
     | STRUCT Tag
       { generate(StructSpecifier,$$,@$,2,$1,$2); }
     ;

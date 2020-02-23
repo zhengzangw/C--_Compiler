@@ -82,7 +82,7 @@ err_id                          {digit}+{id}
 {whitespace}                    {}
 "//"                            { comment_line(); }
 "/*"                            { int status = comment_block();
-                                  if (status == 1) errorA("unterminated comment");
+                                  if (status == 1) errorA("Unterminated comment");
                                 }
 "struct"                        { handle(STRUCT); }
 "return"                        { handle(RETURN); }
