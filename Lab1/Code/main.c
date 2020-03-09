@@ -22,6 +22,7 @@ int main(int argc, char **argv){
 #endif
     yyparse();
     if (error_num==0) ast_print(ast_root, 0);
+    else printf("Total error: %d\n", error_num);
     return 0;
 }
 
