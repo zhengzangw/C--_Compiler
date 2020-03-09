@@ -17,7 +17,7 @@ int main(int argc, char **argv){
         return 1;
     }
     yyrestart(f);
-#ifdef DEBUG
+#ifndef NDEBUG
     yydebug = 1;
 #endif
     yyparse();
