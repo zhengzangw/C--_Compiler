@@ -82,12 +82,13 @@ err_id                          {digit}+{id}
                                     return 0;
                                 }
 {newline}                       {
-                                  print_error();
-                                  yycolumn = newline_error = 1;
+                                    print_error();
+                                    yycolumn = newline_error = 1;
                                 }
 {whitespace}                    {}
 "//"                            { comment_line(); }
-"/*"                            { int status = comment_block();
+"/*"                            {
+                                  int status = comment_block();
                                   if (status == 1) errorA("Unterminated comment");
                                 }
 "struct"                        { handle(STRUCT); }
@@ -156,8 +157,8 @@ int comment_line(){
 
 int comment_block(){
     char c1 = input(), c2;
-    if (c1 != EOF) c2 = input(); else return 1;
-    while (c2 != EOF){
+    if (c1 != '\0') c2 = input(); else return 1;
+    while (c2 != '\0'){
         if (c1 == '*' && c2 == '/') return 0;
         char t = input();
         c1 = c2;
