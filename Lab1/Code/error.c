@@ -35,7 +35,7 @@ int throw_error(char type, int lineno, char* msg, char* detail){
 
 int print_error(){
     if (strlen(yyerror_s)>0){
-        fprintf(stdout, "%s", yyerror_s);
+        fprintf(stderr, "%s", yyerror_s);
         yyerror_s[0] = '\0';
     }
 }
