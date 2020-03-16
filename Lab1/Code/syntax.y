@@ -39,13 +39,13 @@
 %nonassoc <node> ELSE
 
 /* operator precedence */
-%left     <node> ASSIGNOP        /* priority 8 */
+%right     <node> ASSIGNOP        /* priority 8 */
 %left     <node> OR              /* priority 7 */
 %left     <node> AND             /* priority 6 */
 %left     <node> RELOP           /* priority 5 */
 %left     <node> PLUS MINUS      /* priority 4 */
 %left     <node> STAR DIV        /* priority 3 */
-%right    <node> NOT             /* priority 2 */
+%right    <node> NOT NEG         /* priority 2 */
 %left     <node> LP RP LB RB DOT /* priority 1 */
 
 /*--------------------------------------------------------------------
@@ -72,35 +72,44 @@
 /* High-Level Definitions */
 Program         
     : ExtDefList
-      { generate(Program,$$,@$,1,$1); ast_root = $$; }
+      {
+        if (!$$){
+          @$.first_line = yylineno;
+        }
+        generate(Program,$$,@$,1,$1); ast_root = $$; 
+      }
     ;                                
 ExtDefList
     : /* empty */
       { $$ = NULL; }
-    | error
-      { errorB("something is wrong"); }
     | ExtDef ExtDefList
       { generate(ExtDefList,$$,@$,2,$1,$2); }
     ;
 ExtDef          
     : Specifier ExtDecList SEMI
       { generate(ExtDef,$$,@$,3,$1,$2,$3); }
-    | Specifier ExtDecList Specifier
-      { errorB("missing \";\""); }
+    | Specifier ExtDecList
+      { errorB("Missing ';'"); }
+    | Specifier ExtDecList error SEMI
+      { errorB("something wrong in global definition"); }
+    | Specifier error SEMI
+      { errorB("something wrong in global definition"); }
     | Specifier SEMI
       { generate(ExtDef,$$,@$,2,$1,$2); }
-    | error SEMI
-      { errorB("something wrong in global definition"); }
-    | error RC
-      { errorB("something wrong in global definition"); }
+    | Specifier error
+      { errorB("Missing ';'"); }
     | Specifier FunDec CompSt
       { generate(ExtDef,$$,@$,3,$1,$2,$3); }
+    | Specifier error CompSt
+      { errorB("error in function definition"); }
     ;
 ExtDecList      
     : VarDec
       { generate(ExtDecList,$$,@$,1,$1); }
     | VarDec COMMA ExtDecList
       { generate(ExtDecList,$$,@$,3,$1,$2,$3); }
+    | VarDec COMMA error
+      { errorB("something wrong in global definition"); }
     | error COMMA ExtDecList
       { errorB("something wrong in global definition"); }
     ;
@@ -139,8 +148,12 @@ VarDec
       { generate(VarDec,$$,@$,1,$1); }
     | VarDec LB INT RB
       { generate(VarDec,$$,@$,4,$1,$2,$3,$4); }
-    | VarDec LB error SEMI
+    | VarDec LB INT error RB
       { errorB("missing \"]\""); }
+    | VarDec LB error
+      { errorB("missing \"]\""); }
+    | VarDec LB INT COMMA INT RB
+      { errorB("expression error"); }
     ;
 FunDec          
     : ID LP VarList RP
@@ -179,19 +192,23 @@ StmtList
       { $$ = NULL; }
     | Stmt StmtList
       { generate(StmtList,$$,@$,2,$1,$2); }
+    | Stmt error SEMI StmtList
+      { errorB("statement error"); }
     ;
 Stmt
     : Exp SEMI
       { generate(Stmt,$$,@$,2,$1,$2); }
-    | error SEMI
+    | Exp error SEMI
       { errorB("expression error"); }
     | CompSt
       { generate(Stmt,$$,@$,1,$1); }
     | RETURN Exp SEMI
       { generate(Stmt,$$,@$,3,$1,$2,$3); }
-    | RETURN error SEMI
+    | RETURN Exp error SEMI
       { errorB("return error"); }
-    | IF LP Exp RP Stmt 
+    | RETURN Exp error
+      { errorB("Missing ';'"); }
+    | IF LP Exp RP Stmt
       %prec LOWER_THAN_ELSE
       { generate(Stmt,$$,@$,5,$1,$2,$3,$4,$5); }
     | IF LP error Stmt
@@ -215,6 +232,12 @@ DefList
 Def
     : Specifier DecList SEMI
       { generate(Def,$$,@$,3,$1,$2,$3); }
+    | Specifier DecList error SEMI
+      { errorB("something wrong in local definition"); }
+    | Specifier DecList error
+      { errorB("missing ';'"); }
+    | Specifier error
+      { errorB("Missing ';'"); }
     | Specifier error SEMI
       { errorB("something wrong in local definition"); }
     ;
@@ -231,7 +254,7 @@ Dec
       { generate(Dec,$$,@$,1,$1); }
     | VarDec ASSIGNOP Exp
       { generate(Dec,$$,@$,3,$1,$2,$3); }
-    | VarDec ASSIGNOP SEMI
+    | VarDec ASSIGNOP
       { errorB("initial value not given"); }
     ;
 
@@ -239,44 +262,70 @@ Dec
 Exp             
     : Exp ASSIGNOP Exp
       { generate(Exp,$$,@$,3,$1,$2,$3); }
+    | Exp ASSIGNOP error
+      { errorB("expression error with '='"); }
     | Exp AND Exp
       { generate(Exp,$$,@$,3,$1,$2,$3); }
+    | Exp AND error
+      { errorB("expression error with '&'"); }
     | Exp OR Exp
       { generate(Exp,$$,@$,3,$1,$2,$3); }
+    | Exp OR error
+      { errorB("expression error with '|'"); }
     | Exp RELOP Exp
       { generate(Exp,$$,@$,3,$1,$2,$3); }
+    | Exp RELOP error
+      { errorB("expression error"); }
     | Exp PLUS Exp
       { generate(Exp,$$,@$,3,$1,$2,$3); }
+    | Exp PLUS error
+      { errorB("expression error with '+'"); }
     | Exp MINUS Exp
       { generate(Exp,$$,@$,3,$1,$2,$3); }
+    | Exp MINUS error
+      { errorB("expression error with '-'"); }
     | Exp STAR Exp
       { generate(Exp,$$,@$,3,$1,$2,$3); }
+    | Exp STAR error
+      { errorB("expression error with '*'"); }
     | Exp DIV Exp
       { generate(Exp,$$,@$,3,$1,$2,$3); }
+    | Exp DIV error
+      { errorB("expression error with '/'"); }
     | LP Exp RP
       { generate(Exp,$$,@$,3,$1,$2,$3); }
-    | MINUS Exp
+    | LP Exp error RP
+      { errorB("expression error in parentheses"); }
+    | MINUS Exp %prec NEG
       { generate(Exp,$$,@$,2,$1,$2); }
     | NOT Exp
       { generate(Exp,$$,@$,2,$1,$2); }
     | ID LP Args RP
       { generate(Exp,$$,@$,4,$1,$2,$3,$4); }
+    | ID LP Args error RP
+      { errorB("expression error in function"); }
     | ID LP RP
       { generate(Exp,$$,@$,3,$1,$2,$3); }
+    | ID LP error RP
+      { errorB("expression error in function"); }
     | Exp LB Exp RB
       { generate(Exp,$$,@$,4,$1,$2,$3,$4); }
     | Exp LB Exp error RB
       { errorB("missing \"]\""); }
+    | Exp LB RB
+      { errorB("in '[]'"); }
+    | Exp LB Exp COMMA Exp RB
+      { errorB("expression error"); }
     | Exp DOT ID
       { generate(Exp,$$,@$,3,$1,$2,$3); }
+    | DOT ID
+      { errorB("expression error"); }
     | ID
       { generate(Exp,$$,@$,1,$1); }
     | INT
       { generate(Exp,$$,@$,1,$1); }
     | FLOAT
       { generate(Exp,$$,@$,1,$1); }
-    | error RP
-      { errorB("expression error"); }
     ;
 Args            
     : Exp COMMA Args

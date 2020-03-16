@@ -1,11 +1,7 @@
 /** test8
  *  Type A error
  */
-
-aa
-bb
-cc
-
+ 
 struct {
     p = 3 + 5;
 };

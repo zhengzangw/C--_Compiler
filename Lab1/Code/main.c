@@ -17,12 +17,15 @@ int main(int argc, char **argv){
         return 1;
     }
     yyrestart(f);
-#ifndef NDEBUG
-    yydebug = 1;
-#endif
+
+    //yydebug = 1;
+
     yyparse();
     if (error_num==0) ast_print(ast_root, 0);
-    else printf("Total error: %d\n", error_num);
+    else {
+        print_error();
+        //printf("Total error: %d\n", error_num);
+    }
     return 0;
 }
 

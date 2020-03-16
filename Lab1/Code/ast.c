@@ -14,7 +14,10 @@
 
 AST_node* ast_root = NULL;
 
+int cnt = 0;
+
 AST_node* ast_create(char *name, char* original_val, char *val, int lineno){
+    cnt ++;
     AST_node* ret = (AST_node*)malloc(sizeof(AST_node));
     strcpy(ret->name, name);
     strcpy(ret->original_val, original_val);

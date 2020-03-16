@@ -10,9 +10,9 @@
 #define _AST_H
 
 typedef struct abstract_syntax_tree{
-    char name[32];
-    char original_val[32];
-    char val[32];
+    char name[64];
+    char original_val[128];
+    char val[128];
     int lineno;
     int child_num;
     struct abstract_syntax_tree* child[10];

@@ -17,6 +17,7 @@
 #include "ast.h"
 #include "lexical.h"
 #include "syntax.tab.h"
+#include <stdlib.h>
 #include <string.h>
 
 /*--------------------------------------------------------------------
@@ -25,6 +26,8 @@
  * 
  *------------------------------------------------------------------*/
 int yycolumn = 1;
+char* number(char *digits);
+char* floatvalue(char *digits);
 
 /*--------------------------------------------------------------------
  * 
@@ -74,11 +77,11 @@ err_id                          {digit}+{id}
 %%
 
 <<EOF>>                         { 
-                                    print_error(); 
+                                    print_error();
                                     yycolumn = newline_error = 1;
                                     return 0;
                                 }
-{newline}                       { 
+{newline}                       {
                                   print_error();
                                   yycolumn = newline_error = 1;
                                 }
@@ -117,12 +120,12 @@ err_id                          {digit}+{id}
 {err_float}                     { errorA("Illegal float point number"); }
 {err_sci}                       { errorA("Illegal float point number"); }
 
-{int10}                         { handles(INT, number(yytext, 10)); }
-{int8}                          { handles(INT, number(yytext, 8)); }
-{int16}                         { handles(INT, number(yytext, 16)); }
+{int10}                         { handles(INT, number(yytext)); }
+{int8}                          { handles(INT, number(yytext)); }
+{int16}                         { handles(INT, number(yytext)); }
 
-{float}                         { handles(FLOAT, floatvalue(yytext, 0)); }
-{sci}                           { handles(FLOAT, floatvalue(yytext, 1)); }
+{float}                         { handles(FLOAT, floatvalue(yytext)); }
+{sci}                           { handles(FLOAT, floatvalue(yytext)); }
 
 {err_id}                        { errorA("Illegal id"); }
 {id}                            { handle(ID); }
@@ -131,62 +134,18 @@ err_id                          {digit}+{id}
 
 %%
 
-char* number(char *digits, int base){
-    int len = strlen(digits);
-    int ans = 0;
-    int i = 0;
-    if (base == 16) i = 2;
-    for (;i<len;++i){
-        char c = digits[i];
-        if (c>='0' && c<='9')
-            ans = ans * base + c - '0';
-        else if (c>='a' && c<='f')
-            ans = ans * base + c - 'a' + 10;
-        else
-            ans = ans * base + c - 'A' + 10;
-    }
-    char* ret = (char *)malloc(32);
-    sprintf(ret, "%d", ans);
-    handle(ret);
+char* number(char *digits){
+    unsigned int ans = (unsigned int)strtoul(digits, NULL, 0);
+    char* ret = (char *)malloc(128);
+    sprintf(ret, "%u", ans);
+    return ret;
 }
 
-char* floatvalue(char *digits, int type){
-    double ans = 0;
-    int len = strlen(digits);
-    int part1 = 0;
-    double part2 = 0;
-    int i = 0;
-    for (;i<len;++i){
-        char c = digits[i];
-        if (c != '.') part1 = part1*10 + c - '0';
-        else break;
-    }
-    i++;
-    double base = 1;
-    for (;i<len && digits[i]!='E' && digits[i]!='e';++i){
-        char c = digits[i];
-        base /= 10;
-        part2 += (c - '0') * base;
-    }
-    ans = (double)part1 + part2;
-    
-    if (type==1){
-        int sgn = (digits[i+1]=='-') ? -1 : 1;
-        if (digits[i+1] == '+' || digits[i+1] == '-') {
-            i+=2;
-        }
-        else {
-            i++;
-        }
-        int index = atoi(digits+i);
-        for (int j=0;j<index;++j) {
-            ans = (sgn == 1) ? ans*10 : ans/10;
-        }
-    }
-
-    char* ret = (char *)malloc(32);
-    sprintf(ret, "%lf", ans);
-    handle(ret);
+char* floatvalue(char *digits){
+    float ans = (float)atof(digits);
+    char* ret = (char *)malloc(128);
+    sprintf(ret, "%f", ans);
+    return ret;
 }
 
 int comment_line(){

@@ -5,7 +5,7 @@
  * Author: Zangwei Zheng, zhengzangw@163.com
  *
  **/
-#define NDEBUG
+
 #ifndef _COMMON_H
 #define _COMMON_H
 
@@ -21,10 +21,8 @@
 #define OUTINT(x) printf("\e[31m%d\e[0m\n", x)
 #define OUTFLOAT(x) printf("\e[31m%s\e[0m\n", x)
 
-#ifndef NDEBUG
-#define YYDEBUG 1
-extern int yydebug;
-#endif
+//#define YYDEBUG 1
+//extern int yydebug;
 
 /*--------------------------------------------------------------------
  *

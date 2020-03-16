@@ -8,8 +8,6 @@
 #ifndef _LEXICAL_H
 #define _LEXICAL_H
 
-char* number(char *, int);
-char* floatvalue(char *, int);
 int comment_line();
 int comment_block();
 
