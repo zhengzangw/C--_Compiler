@@ -1,10 +1,14 @@
-/**
- *
- * C-- Compiler, Labs of NJU course Principles and Techiques of Compiler
- *
- * Author: Zangwei Zheng, zhengzangw@163.com
- *
- **/
+/*
+ * File: common.h
+ * Project: C--_Compiler
+ * File Created: 2020-02-22
+ * Author: Zangwei Zheng (zzw@smail.nju.edu.cn)
+ * -----
+ * Last Modified: 2020-03-29
+ * Modified By: Zangwei Zheng (zzw@smail.nju.edu.cn)
+ * -----
+ * Copyright 2020 NJU, Zangwei Zheng
+ */
 
 #ifndef _COMMON_H
 #define _COMMON_H
@@ -22,7 +26,7 @@
 #define OUTFLOAT(x) printf("\e[31m%s\e[0m\n", x)
 
 //#define YYDEBUG 1
-//extern int yydebug;
+// extern int yydebug;
 
 /*--------------------------------------------------------------------
  *
@@ -36,8 +40,8 @@
  * Flex & Bison
  *
  *------------------------------------------------------------------*/
-void yyrestart (FILE*);
-int yyparse (void);
+void yyrestart(FILE*);
+int yyparse(void);
 int yyerror(char*);
 
 #endif

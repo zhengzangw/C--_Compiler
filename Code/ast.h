@@ -1,10 +1,14 @@
-/**
- *
- * C-- Compiler, Labs of NJU course Principles and Techiques of Compiler
- *
- * Author: Zangwei Zheng, zhengzangw@163.com
- *
- **/
+/*
+ * File: ast.h
+ * Project: C--_Compiler
+ * File Created: 2020-02-22
+ * Author: Zangwei Zheng (zzw@smail.nju.edu.cn)
+ * -----
+ * Last Modified: 2020-03-29
+ * Modified By: Zangwei Zheng (zzw@smail.nju.edu.cn)
+ * -----
+ * Copyright 2020 NJU, Zangwei Zheng
+ */
 
 #ifndef _AST_H
 #define _AST_H

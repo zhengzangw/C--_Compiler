@@ -1,16 +1,22 @@
-/**
- * C-- Compiler, Labs of NJU course Principles and Techiques of Compiler
- *
- * Author: Zangwei Zheng, zhengzangw@163.com
- *
- **/
+/*
+ * File: lexical.l
+ * Project: C--_Compiler
+ * File Created: 2020-03-22
+ * Author: Zangwei Zheng (zzw@smail.nju.edu.cn)
+ * -----
+ * Last Modified: 2020-03-29
+ * Modified By: Zangwei Zheng (zzw@smail.nju.edu.cn)
+ * -----
+ * Copyright 2020 NJU, Zangwei Zheng
+ */
+
 %option yylineno
 
 %{
 /*--------------------------------------------------------------------
- * 
+ *
  * Includes
- * 
+ *
  *------------------------------------------------------------------*/
 #include "common.h"
 #include "error.h"
@@ -21,18 +27,18 @@
 #include <string.h>
 
 /*--------------------------------------------------------------------
- * 
+ *
  * global variables
- * 
+ *
  *------------------------------------------------------------------*/
 int yycolumn = 1;
 char* number(char *digits);
 char* floatvalue(char *digits);
 
 /*--------------------------------------------------------------------
- * 
+ *
  * defines
- * 
+ *
  *------------------------------------------------------------------*/
 #define YY_USER_ACTION \
     yylloc.first_line = yylloc.last_line = yylineno; \
@@ -44,9 +50,9 @@ char* floatvalue(char *digits);
 %}
 
 /*--------------------------------------------------------------------
- * 
+ *
  * flex definition
- * 
+ *
  *------------------------------------------------------------------*/
 /* general */
 relop                           >|<|>=|<=|<=|==|!=
@@ -76,7 +82,7 @@ err_id                          {digit}+{id}
 
 %%
 
-<<EOF>>                         { 
+<<EOF>>                         {
                                     print_error();
                                     yycolumn = newline_error = 1;
                                     return 0;
