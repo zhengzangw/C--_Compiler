@@ -1,2 +1,12 @@
+/Code/*
+!/Code/*.c
+!/Code/*.h
+!/Code/lexical.l
+!/Code/syntax.y
+!/Code/Makefile
+/Code/lex.yy.c
+/Code/syntax.tab.*
+
+parser
 *.zip
 compilers-tests/**
