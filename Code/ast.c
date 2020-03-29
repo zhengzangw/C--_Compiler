@@ -25,7 +25,7 @@ AST_node* ast_create(char *name, char* original_val, char *val, int lineno){
     ret->lineno = lineno;
     ret->child_num = 0;
     return ret;
-}   
+}
 
 int ast_append(AST_node* cur, int child_num, ...){
     va_list ap;
@@ -35,6 +35,7 @@ int ast_append(AST_node* cur, int child_num, ...){
         cur->child[i] = va_arg(ap, AST_node*);
     }
     va_end(ap);
+	return 0;
 }
 
 #define blank(n) for (int i=0;i<2*n;++i) printf(" ");

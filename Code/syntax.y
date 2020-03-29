@@ -7,9 +7,9 @@
  **/
 
 /*--------------------------------------------------------------------
- * 
+ *
  * Includes
- * 
+ *
  *------------------------------------------------------------------*/
 #include "common.h"
 #include "error.h"
@@ -23,16 +23,16 @@
 %locations
 
 /*--------------------------------------------------------------------
- * 
+ *
  * definitions
- * 
+ *
  *------------------------------------------------------------------*/
 %union { AST_node* node; }
 
 /*--------------------------------------------------------------------
- * 
+ *
  * terminal-symbols
- * 
+ *
  *------------------------------------------------------------------*/
 %token    <node> INT FLOAT ID SEMI LC RC COMMA TYPE STRUCT RETURN IF WHILE
 %nonassoc <node> LOWER_THAN_ELSE
@@ -49,43 +49,43 @@
 %left     <node> LP RP LB RB DOT /* priority 1 */
 
 /*--------------------------------------------------------------------
- * 
+ *
  * nonterminal-symbols
- * 
+ *
  *------------------------------------------------------------------*/
 %type    <node> Program ExtDefList ExtDef ExtDecList Specifier StructSpecifier OptTag Tag VarDec FunDec VarList ParamDec CompSt StmtList Stmt DefList Def DecList Dec Exp Args
 
 /*--------------------------------------------------------------------
- * 
+ *
  * start of grammer
- * 
+ *
  *------------------------------------------------------------------*/
 %start   Program
 
 %%
 
 /*--------------------------------------------------------------------
- * 
+ *
  * rules
- * 
+ *
  *------------------------------------------------------------------*/
 /* High-Level Definitions */
-Program         
+Program
     : ExtDefList
       {
         if (!$$){
           @$.first_line = yylineno;
         }
-        generate(Program,$$,@$,1,$1); ast_root = $$; 
+        generate(Program,$$,@$,1,$1); ast_root = $$;
       }
-    ;                                
+    ;
 ExtDefList
     : /* empty */
       { $$ = NULL; }
     | ExtDef ExtDefList
       { generate(ExtDefList,$$,@$,2,$1,$2); }
     ;
-ExtDef          
+ExtDef
     : Specifier ExtDecList SEMI
       { generate(ExtDef,$$,@$,3,$1,$2,$3); }
     | Specifier ExtDecList
@@ -103,7 +103,7 @@ ExtDef
     | Specifier error CompSt
       { errorB("error in function definition"); }
     ;
-ExtDecList      
+ExtDecList
     : VarDec
       { generate(ExtDecList,$$,@$,1,$1); }
     | VarDec COMMA ExtDecList
@@ -115,13 +115,13 @@ ExtDecList
     ;
 
 /* Specifier */
-Specifier       
+Specifier
     : TYPE
       { generate(Specifier,$$,@$,1,$1); }
     | StructSpecifier
       { generate(Specifier,$$,@$,1,$1); }
     ;
-StructSpecifier 
+StructSpecifier
     : STRUCT OptTag LC DefList RC
       { generate(StructSpecifier,$$,@$,5,$1,$2,$3,$4,$5); }
     | STRUCT OptTag LC DefList error RC
@@ -129,21 +129,21 @@ StructSpecifier
     | STRUCT Tag
       { generate(StructSpecifier,$$,@$,2,$1,$2); }
     ;
-OptTag          
-    : /* empty */ 
+OptTag
+    : /* empty */
       { $$ = NULL; }
     | error
       { errorB("something wrong in struct tag"); }
     | ID
       { generate(OptTag,$$,@$,1,$1); }
     ;
-Tag             
+Tag
     : ID
       { generate(Tag,$$,@$,1,$1); }
     ;
 
 /* Declarators */
-VarDec          
+VarDec
     : ID
       { generate(VarDec,$$,@$,1,$1); }
     | VarDec LB INT RB
@@ -155,7 +155,7 @@ VarDec
     | VarDec LB INT COMMA INT RB
       { errorB("expression error"); }
     ;
-FunDec          
+FunDec
     : ID LP VarList RP
       { generate(FunDec,$$,@$,4,$1,$2,$3,$4); }
     | ID LP VarList error RP
@@ -167,7 +167,7 @@ FunDec
     | ID LP error LC
       { errorB("something wrong in the definition of structure"); }
     ;
-VarList         
+VarList
     : ParamDec COMMA VarList
       { generate(VarList,$$,@$,3,$1,$2,$3); }
     | error COMMA
@@ -175,7 +175,7 @@ VarList
     | ParamDec
       { generate(VarList,$$,@$,1,$1); }
     ;
-ParamDec        
+ParamDec
     : Specifier VarDec
       { generate(ParamDec,$$,@$,2,$1,$2); }
     ;
@@ -214,7 +214,7 @@ Stmt
     | IF LP error Stmt
       { errorB("missing \")\""); }
     | IF LP Exp RP Stmt ELSE Stmt
-      { generate(Stmt,$$,@$,7,$1,$2,$3,$4,$5,$6,$7); } 
+      { generate(Stmt,$$,@$,7,$1,$2,$3,$4,$5,$6,$7); }
     | IF LP Exp RP error ELSE Stmt
       { errorB("missing \";\""); }
     | WHILE LP Exp RP Stmt
@@ -223,7 +223,7 @@ Stmt
       { errorB("missing \")\""); }
 
 /* Local Definitions */
-DefList         
+DefList
     : /* empty */
       { $$ = NULL; }
     | Def DefList
@@ -241,7 +241,7 @@ Def
     | Specifier error SEMI
       { errorB("something wrong in local definition"); }
     ;
-DecList         
+DecList
     : Dec
       { generate(DecList,$$,@$,1,$1); }
     | Dec COMMA DecList
@@ -249,7 +249,7 @@ DecList
     | error COMMA DecList
       { errorB("something wrong in definitions"); }
     ;
-Dec             
+Dec
     : VarDec
       { generate(Dec,$$,@$,1,$1); }
     | VarDec ASSIGNOP Exp
@@ -259,7 +259,7 @@ Dec
     ;
 
 /* Expression */
-Exp             
+Exp
     : Exp ASSIGNOP Exp
       { generate(Exp,$$,@$,3,$1,$2,$3); }
     | Exp ASSIGNOP error
@@ -327,7 +327,7 @@ Exp
     | FLOAT
       { generate(Exp,$$,@$,1,$1); }
     ;
-Args            
+Args
     : Exp COMMA Args
       { generate(Args,$$,@$,3,$1,$2,$3); }
     | Exp
@@ -336,12 +336,13 @@ Args
 
 %%
 /*------------------------------------------------------------------------------
- * 
+ *
  * functions
- * 
+ *
  *----------------------------------------------------------------------------*/
-int yyerror(char* msg){ 
+int yyerror(char* msg){
   errorF();
+	return 0;
 }
 
 /*--------------------------------------------------------------------

@@ -38,6 +38,7 @@ int print_error(){
         fprintf(stderr, "%s", yyerror_s);
         yyerror_s[0] = '\0';
     }
+	return 0;
 }
 
 /*--------------------------------------------------------------------
