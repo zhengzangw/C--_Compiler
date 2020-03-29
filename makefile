@@ -6,6 +6,7 @@ endif
 ifeq ($(UNAME_S), Darwin)
 	LEX_FLAGS = -ll
 endif
+CI = ./CI4C--_Compiler/autotest.sh
 
 CC = gcc
 FLEX = flex
@@ -39,8 +40,9 @@ syntax-c: $(YFILE)
 .PHONY: clean test
 test:
 	./parser ../Test/test1.cmm
+testall: test1
 test1:
-	./autoTest/autotest.sh ./parser
+	$(CI) ./parser
 clean:
 	rm -f $(SRC)/parser $(SRC)/lex.yy.c $(SRC)/syntax.tab.c $(SRC)/syntax.tab.h $(SRC)/syntax.output
 	rm -f $(OBJS) $(OBJS:.o=.d)

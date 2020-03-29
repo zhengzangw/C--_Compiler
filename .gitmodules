@@ -1,3 +1,0 @@
-[submodule "autoTest"]
-	path = autoTest
-	url = https://github.com/zhengzangw/compilers-tests.git
