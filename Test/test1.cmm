@@ -1,3 +1,9 @@
+struct big_str {
+	int p,sa,sb;
+	int q,sc,sd;
+	float dd[10];
+	int x,y;
+} helpme;
 int test(int a, float bb, float c[10]){
 	return 0;
 }

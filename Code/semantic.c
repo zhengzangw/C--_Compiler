@@ -14,6 +14,8 @@
 
 #include "common.h"
 
+/*** High-Level Definitions ***/
+
 void Program(AST_node* cur) {
     // Program -> ExtDefList
     for (int i = 0; i < cur->child_num; ++i) {
@@ -42,12 +44,65 @@ void ExtDef(AST_node* cur) {
     else if (strcmp(cur->child[1]->name, "FunDec") == 0) {
         Type_ptr type = Specifier(cur->child[0]);
         FunDec(cur->child[1], type);
+        CompSt(cur->child[2]);
     }
     // ExtDef -> Specifier SEMI
     else {
         return;
     }
-};
+}
+
+void ExtDecList(AST_node* cur, Type_ptr specifier_type) {
+    // ExtDecList -> VarDec
+    Symbol_ptr tmp = VarDec(cur->child[0], specifier_type);
+    hash_insert(tmp);
+    // ExtDecList -> VarDec COMMA ExtDecList
+    if (cur->child_num == 3) ExtDecList(cur->child[2], specifier_type);
+}
+
+/*** Specifiers ***/
+
+Type_ptr Specifier(AST_node* cur) {
+    // Specifier -> TYPE
+    if (strcmp(cur->child[0]->name, "TYPE") == 0) {
+        Type_ptr type = (Type_ptr)malloc(sizeof(Type));
+        type->kind = BASIC;
+        if (strcmp(cur->child[0]->val, "int") == 0) {
+            type->u.basic = INT;
+        } else {
+            type->u.basic = FLOAT;
+        }
+        return type;
+    }
+    // Specifier -> StructSpecifier
+    else {
+        return StructSpecifier(cur->child[0]);
+    }
+}
+
+Type_ptr StructSpecifier(AST_node* cur) {
+    // StructSpecifier -> STRUCT Tag
+    if (cur->child_num == 2) {
+        Symbol_ptr struct_tmp = hash_search(cur->child[1]->val);
+        return struct_tmp->type;
+    }
+    // StructSpecifier -> STRUCT OptTag LC DefList RC
+    else {
+        Type_ptr type = (Type_ptr)malloc(sizeof(Type));
+        type->kind = STRUCTURE;
+        type->u.structure = DefList(cur->child[3]);
+        if (cur->child[1]) {
+            Symbol_ptr prototype = (Symbol_ptr)malloc(sizeof(Symbol));
+            prototype->name = cur->child[1]->child[0]->val;
+            prototype->is_structrue = 1;
+            prototype->type = type;
+            hash_insert(prototype);
+        }
+        return type;
+    }
+}
+
+/*** Declarators ***/
 
 void FunDec(AST_node* cur, Type_ptr specifier_type) {
     Symbol_ptr tmp = (Symbol_ptr)malloc(sizeof(Symbol));
@@ -74,11 +129,11 @@ Symbol_ptr VarList(AST_node* cur, Symbol_ptr func) {
     hash_insert(tmp);
     // VarList -> ParamDec COMMA VarList
     if (cur->child_num == 3) {
-        tmp->func_nxt = VarList(cur->child[2], func);
+        tmp->cross_nxt = VarList(cur->child[2], func);
     }
     // VarList -> ParamDec
     else {
-        tmp->func_nxt = NULL;
+        tmp->cross_nxt = NULL;
     }
     return tmp;
 }
@@ -87,16 +142,6 @@ Symbol_ptr ParamDec(AST_node* cur) {
     Type_ptr type = Specifier(cur->child[0]);
     Symbol_ptr ret = VarDec(cur->child[1], type);
     return ret;
-}
-
-void CompSt(AST_node* cur) { return; }
-
-void ExtDecList(AST_node* cur, Type_ptr specifier_type) {
-    // ExtDecList -> VarDec
-    Symbol_ptr tmp = VarDec(cur->child[0], specifier_type);
-    hash_insert(tmp);
-    // ExtDecList -> VarDec COMMA ExtDecList
-    if (cur->child_num == 3) ExtDecList(cur->child[2], specifier_type);
 }
 
 Symbol_ptr VarDec(AST_node* cur, Type_ptr specifier_type) {
@@ -119,22 +164,71 @@ Symbol_ptr VarDec(AST_node* cur, Type_ptr specifier_type) {
     }
 }
 
-Type_ptr Specifier(AST_node* cur) {
-    Type_ptr type = (Type_ptr)malloc(sizeof(Type));
-    // Specifier -> TYPE
-    if (strcmp(cur->child[0]->name, "TYPE") == 0) {
-        type->kind = BASIC;
-        if (strcmp(cur->child[0]->val, "int") == 0) {
-            type->u.basic = INT;
-        } else {
-            type->u.basic = FLOAT;
-        }
+/*** Local Definitions ***/
+Symbol_ptr DecList_last_ptr = NULL;
+Symbol_ptr DefList(AST_node* cur) {
+    // DefList -> \epsilon
+    Symbol_ptr tmp = Def(cur->child[0]);
+    Symbol_ptr cur_last_ptr = DecList_last_ptr;
+    DecList_last_ptr = NULL;
+    // DefList -> Def DefList
+    if (cur->child[1]) {
+        cur_last_ptr->cross_nxt = DefList(cur->child[1]);
     }
-    // Specifier -> StructSpecifier
-    else {
-    }
-    return type;
+    return tmp;
 }
+
+Symbol_ptr Def(AST_node* cur) {
+    // Def -> Specifier DecList SEMI
+    Type_ptr type = Specifier(cur->child[0]);
+    return DecList(cur->child[1], type);
+}
+
+Symbol_ptr DecList(AST_node* cur, Type_ptr specifier_type) {
+    // DecList -> Dec
+    Symbol_ptr tmp = Dec(cur->child[0], specifier_type);
+    hash_insert(tmp);
+    // DecList -> Dec COMMA DecList
+    if (cur->child_num == 3) {
+        tmp->cross_nxt = DecList(cur->child[2], specifier_type);
+    }
+    if (DecList_last_ptr == NULL) {
+        DecList_last_ptr = tmp;
+    }
+    return tmp;
+}
+
+Symbol_ptr Dec(AST_node* cur, Type_ptr specifier_type) {
+    // Dec -> VarDec
+    Symbol_ptr tmp = VarDec(cur->child[0], specifier_type);
+    // Dec -> VarDec ASSIGNOP Exp
+    Exp(cur->child[2]);
+    return tmp;
+}
+
+/*** Statments ***/
+
+void CompSt(AST_node* cur) {
+    // CompSt -> LC DefList StmtList RC
+    if (cur->child[1]) {
+        DefList(cur->child[1]);
+    }
+    if (cur->child[2]) {
+        StmtList(cur->child[2]);
+    }
+}
+void StmtList(AST_node* cur) {
+    // StmtList -> Stmt StmtList
+    Stmt(cur->child[0]);
+    if (cur->child[1]) {
+        StmtList(cur->child[1]);
+    }
+}
+void Stmt(AST_node* cur) { return; }
+
+/*** Expression ***/
+
+void Exp(AST_node* cur) { return; }
 
 /*--------------------------------------------------------------------
  * semantic.c

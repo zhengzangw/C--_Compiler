@@ -59,12 +59,17 @@ Symbol* hash_search(char* name) {
     return NULL;
 }
 
-const char* kind_name[] = {"BASIC", "ARRAY", "STRUCTURE", "FUNCTION"};
+const char* kind_name[] = {"BASIC", "ARRAY", "STRUCT", "FUNC"};
 const char* basic_name[] = {"UNKNOWN", "INT", "FLOAT"};
-void log_symbol_name(Symbol_ptr node) {
-    printf("%-10s:%-10s:", node->name, kind_name[node->type->kind]);
+void log_symbol(Symbol_ptr node) {
+    if (node->is_structrue) {
+        printf("%10s:%-6s:", node->name, "PROTO");
+    } else {
+        printf("%10s:%-6s:", node->name, kind_name[node->type->kind]);
+    }
 }
 void log_type(Type_ptr type) {
+    Symbol_ptr tmp;
     switch (type->kind) {
         case BASIC:
             printf("%s", basic_name[type->u.basic]);
@@ -76,17 +81,25 @@ void log_type(Type_ptr type) {
         case FUNCTION:
             log_type(type->u.function.ret);
             printf("(");
-            Symbol_ptr tmp = type->u.function.params;
-            printf("[%d] ", type->u.function.params_num);
+            tmp = type->u.function.params;
             for (int i = 0; i < type->u.function.params_num; ++i) {
                 if (i > 0) printf(",");
-                log_symbol_name(tmp);
+                log_symbol(tmp);
                 log_type(tmp->type);
-                tmp = tmp->func_nxt;
+                tmp = tmp->cross_nxt;
             }
             printf(")");
             break;
         case STRUCTURE:
+            printf("{");
+            tmp = type->u.structure;
+            while (tmp) {
+                log_symbol(tmp);
+                log_type(tmp->type);
+                tmp = tmp->cross_nxt;
+                printf(";");
+            }
+            printf("}");
             break;
     }
 }
@@ -94,7 +107,7 @@ void _hash_print_all_symbols() {
     for (int i = 0; i < SYMBOL_SIZE; ++i) {
         Symbol_ptr cur = hash_table[i];
         while (cur) {
-            log_symbol_name(cur);
+            log_symbol(cur);
             log_type(cur->type);
             printf("\n");
             cur = cur->nxt;

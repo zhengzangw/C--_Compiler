@@ -21,13 +21,16 @@ typedef struct _Type {
     union {
         // BASIC
         int basic;
+
         // ARRAY
         struct {
             Type_ptr elem;
             int size;
         } array;
+
         // STRUCTRURE
         Symbol_ptr structure;
+
         // FUNCTION
         struct {
             Type_ptr ret;
@@ -40,7 +43,8 @@ typedef struct _Type {
 typedef struct _Symbol {
     char* name;
     Type_ptr type;
-    Symbol_ptr nxt, func_nxt;
+    Symbol_ptr nxt, cross_nxt;
+    int is_structrue;
 } Symbol;
 
 extern Symbol* hash_table[SYMBOL_SIZE];
