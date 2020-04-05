@@ -11,7 +11,7 @@ CI = ./CI4C--_Compiler/autotest.sh
 CC = gcc
 FLEX = flex
 BISON = bison
-CFLAGS = -std=c99
+CFLAGS = -std=c99 -g
 
 CFILES = $(shell find $(SRC)/ -name "*.c")
 OBJS = $(CFILES:.c=.o)
@@ -23,11 +23,11 @@ LFO = $(LFC:.c=.o)
 YFO = $(YFC:.c=.o)
 
 parser: syntax $(filter-out $(LFO),$(OBJS))
-	$(CC) -o parser $(filter-out $(LFO),$(OBJS)) $(LEX_FLAGS) -ly
+	$(CC) $(CFLAGS) -o parser $(filter-out $(LFO),$(OBJS)) $(LEX_FLAGS) -ly
 	@cp parser $(SRC)
 
 syntax: lexical syntax-c
-	$(CC) -c $(YFC) -o $(YFO)
+	$(CC) $(CFLAGS) -c $(YFC) -o $(YFO)
 
 lexical: $(LFILE)
 	$(FLEX) -o $(LFC) $(LFILE)
@@ -38,8 +38,8 @@ syntax-c: $(YFILE)
 -include $(patsubst %.o, %.d, $(OBJS))
 
 .PHONY: clean test
-test:
-	./parser ../Test/test1.cmm
+test: parser
+	./parser ./Test/test1.cmm
 testall:
 	$(CI) ./parser
 clean:

@@ -12,7 +12,7 @@
 
 #include "error.h"
 #include "common.h"
-#include "string.h"
+#include <string.h>
 
 int error_num = 0;
 int newline_error = 1;

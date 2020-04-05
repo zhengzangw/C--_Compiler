@@ -4,9 +4,6 @@
  * File Created: 2020-02-22
  * Author: Zangwei Zheng (zzw@smail.nju.edu.cn)
  * -----
- * Last Modified: 2020-03-29
- * Modified By: Zangwei Zheng (zzw@smail.nju.edu.cn)
- * -----
  * Copyright 2020 NJU, Zangwei Zheng
  */
 

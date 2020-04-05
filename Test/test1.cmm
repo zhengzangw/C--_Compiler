@@ -1,0 +1,10 @@
+int test(int a, float bb, float c[10]){
+	return 0;
+}
+int a;
+float b[10][20][100][0xf];
+int main()
+{
+	int i = 0;
+	j = i + 1;
+}

@@ -13,6 +13,8 @@
 #include "ast.h"
 #include "common.h"
 #include "error.h"
+#include "semantic.h"
+#include "symbol.h"
 
 int main(int argc, char** argv) {
     if (argc <= 1) return 1;
@@ -26,12 +28,18 @@ int main(int argc, char** argv) {
     // yydebug = 1;
 
     yyparse();
-    if (error_num == 0)
-        ast_print(ast_root, 0);
-    else {
+
+    if (error_num == 0) {
+        // Lab 1
+        // ast_print(ast_root, 0);
+        // Lab 2
+        hash_create();
+        Program(ast_root);
+        _hash_print_all_symbols();
+    } else {
         print_error();
-        // printf("Total error: %d\n", error_num);
     }
+
     return 0;
 }
 
