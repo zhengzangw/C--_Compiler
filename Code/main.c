@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
         // Lab 2
         hash_create();
         Program(ast_root);
-        _hash_print_all_symbols();
+        //_hash_print_all_symbols();
     } else {
         print_error();
     }

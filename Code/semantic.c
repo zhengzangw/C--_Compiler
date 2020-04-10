@@ -16,6 +16,10 @@
 
 #define astcmp(i, str) \
     (cur->child_num > (i) && strcmp(cur->child[i]->name, #str) == 0)
+#define semantic_error(type, lineno, desc) \
+    printf("Error type %d at Line %d: %s.\n", type, lineno, desc)
+#define semantic_error_option(type, lineno, desc, letter) \
+    printf("Error type %d at Line %d: %s \"%s\".\n", type, lineno, desc, letter)
 
 /*** High-Level Definitions ***/
 
@@ -56,6 +60,7 @@ void ExtDef(AST_node* cur) {
 void ExtDecList(AST_node* cur, Type_ptr specifier_type) {
     // ExtDecList -> VarDec
     Symbol_ptr tmp = VarDec(cur->child[0], specifier_type);
+    // NOTE Error[3]
     hash_insert(tmp);
     // ExtDecList -> VarDec COMMA ExtDecList
     if (cur->child_num == 3) ExtDecList(cur->child[2], specifier_type);
@@ -84,11 +89,13 @@ Type_ptr Specifier(AST_node* cur) {
 Type_ptr StructSpecifier(AST_node* cur) {
     // StructSpecifier -> STRUCT Tag
     if (cur->child_num == 2) {
+        // NOTE Error[17]
         Symbol_ptr struct_tmp = hash_search(cur->child[1]->val);
         return struct_tmp->type;
     }
     // StructSpecifier -> STRUCT OptTag LC DefList RC
     else {
+        // NOTE Error[15]
         Type_ptr type = (Type_ptr)malloc(sizeof(Type));
         type->kind = STRUCTURE;
         type->u.structure = DefList(cur->child[3]);
@@ -97,6 +104,7 @@ Type_ptr StructSpecifier(AST_node* cur) {
             prototype->name = cur->child[1]->child[0]->val;
             prototype->is_structrue = 1;
             prototype->type = type;
+            // NOTE Error[16]
             hash_insert(prototype);
         }
         return type;
@@ -111,6 +119,7 @@ void FunDec(AST_node* cur, Type_ptr specifier_type) {
     tmp->type = (Type_ptr)malloc(sizeof(Type));
     tmp->type->kind = FUNCTION;
     tmp->type->u.function.ret = specifier_type;
+    // NOTE Error[4]
     hash_insert(tmp);
     // FunDec -> ID LP RP
     if (cur->child_num == 3) {
@@ -127,6 +136,7 @@ void FunDec(AST_node* cur, Type_ptr specifier_type) {
 Symbol_ptr VarList(AST_node* cur, Symbol_ptr func) {
     func->type->u.function.params_num++;
     Symbol_ptr tmp = ParamDec(cur->child[0]);
+    // NOTE Error[3]
     hash_insert(tmp);
     // VarList -> ParamDec COMMA VarList
     if (cur->child_num == 3) {
@@ -188,6 +198,7 @@ Symbol_ptr Def(AST_node* cur) {
 Symbol_ptr DecList(AST_node* cur, Type_ptr specifier_type) {
     // DecList -> Dec
     Symbol_ptr tmp = Dec(cur->child[0], specifier_type);
+    // NOTE Error[3]
     hash_insert(tmp);
     // DecList -> Dec COMMA DecList
     if (cur->child_num == 3) {
@@ -203,9 +214,9 @@ Symbol_ptr Dec(AST_node* cur, Type_ptr specifier_type) {
     // Dec -> VarDec
     Symbol_ptr tmp = VarDec(cur->child[0], specifier_type);
     // Dec -> VarDec ASSIGNOP Exp
-	if (cur->child_num == 3){
-		Exp(cur->child[2]);
-	}
+    if (cur->child_num == 3) {
+        Exp(cur->child[2]);
+    }
     return tmp;
 }
 
@@ -236,6 +247,7 @@ void Stmt(AST_node* cur) {
     }
     // Stmt -> RETURN Exp SEMI
     else if (astcmp(0, RETURN)) {
+        // NOTE Error[8]
         Exp(cur->child[1]);
     }
     // Stmt -> WHILE LP Exp RP Stmt
@@ -263,6 +275,7 @@ void Exp(AST_node* cur) {
     // ID LP Args RP
     // ID LP RP
     if (astcmp(1, LP)) {
+        // NOTE Error[2], Error[9], Error[11]
         return;
     }
     // LP Exp RP
@@ -271,16 +284,20 @@ void Exp(AST_node* cur) {
     }
     // Exp LB Exp RB
     else if (astcmp(1, LB)) {
+        // NOTE Error[10], Error[12]
         Exp(cur->child[0]);
         Exp(cur->child[2]);
     }
     // Exp DOT ID
     else if (astcmp(1, DOT)) {
+        // NOTE Error[13], Error[14]
         Exp(cur->child[0]);
     }
     // Exp ASSIGNOP Exp
     else if (astcmp(1, ASSIGNOP)) {
-        Exp(cur->child[1]);
+        // NOTE Error[5], Error[6]
+        Exp(cur->child[0]);
+        Exp(cur->child[2]);
     }
     // Exp AND Exp
     // Exp OR Exp
@@ -290,7 +307,9 @@ void Exp(AST_node* cur) {
     // Exp STAR Exp
     // Exp DIV Exp
     else if (cur->child_num == 3) {
-        Exp(cur->child[1]);
+        // NOTE Error[7]
+        Exp(cur->child[0]);
+        Exp(cur->child[2]);
     }
     // MINUS Exp
     // NOT Exp
@@ -299,6 +318,10 @@ void Exp(AST_node* cur) {
     }
     // ID
     else if (astcmp(0, ID)) {
+		// NOTE Error[1]
+		if (hash_search(cur->child[0]->val)==NULL){
+			semantic_error_option(1, cur->child[0]->lineno, "Undefined variable", cur->child[0]->val);
+		}
     }
     // INT
     else if (astcmp(0, INT)) {
