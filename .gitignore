@@ -11,3 +11,4 @@ parser
 *.zip
 compilers-tests/**
 .DS_Store
+.vscode

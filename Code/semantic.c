@@ -14,14 +14,15 @@
 
 #include "common.h"
 
+#define astcmp(i, str) \
+    (cur->child_num > (i) && strcmp(cur->child[i]->name, #str) == 0)
+
 /*** High-Level Definitions ***/
 
 void Program(AST_node* cur) {
     // Program -> ExtDefList
-    for (int i = 0; i < cur->child_num; ++i) {
-        if (strcmp(cur->child[i]->name, "ExtDefList") == 0) {
-            ExtDefList(cur->child[i]);
-        }
+    if (astcmp(0, ExtDefList)) {
+        ExtDefList(cur->child[0]);
     }
 }
 
@@ -36,12 +37,12 @@ void ExtDefList(AST_node* cur) {
 
 void ExtDef(AST_node* cur) {
     // ExtDef -> Specifier ExtDecList SEMI
-    if (strcmp(cur->child[1]->name, "ExtDecList") == 0) {
+    if (astcmp(1, ExtDecList)) {
         Type_ptr type = Specifier(cur->child[0]);
         ExtDecList(cur->child[1], type);
     }
     // ExtDef -> Specifier FunDec CompSt
-    else if (strcmp(cur->child[1]->name, "FunDec") == 0) {
+    else if (astcmp(1, FunDec)) {
         Type_ptr type = Specifier(cur->child[0]);
         FunDec(cur->child[1], type);
         CompSt(cur->child[2]);
@@ -64,7 +65,7 @@ void ExtDecList(AST_node* cur, Type_ptr specifier_type) {
 
 Type_ptr Specifier(AST_node* cur) {
     // Specifier -> TYPE
-    if (strcmp(cur->child[0]->name, "TYPE") == 0) {
+    if (astcmp(0, TYPE)) {
         Type_ptr type = (Type_ptr)malloc(sizeof(Type));
         type->kind = BASIC;
         if (strcmp(cur->child[0]->val, "int") == 0) {
@@ -146,7 +147,7 @@ Symbol_ptr ParamDec(AST_node* cur) {
 
 Symbol_ptr VarDec(AST_node* cur, Type_ptr specifier_type) {
     // VarDec -> VarDec LB INT RB
-    if (strcmp(cur->child[0]->name, "VarDec") == 0) {
+    if (astcmp(0, VarDec)) {
         Symbol_ptr tmp = VarDec(cur->child[0], specifier_type);
         Type_ptr tmp_type = (Type_ptr)malloc(sizeof(Type));
         tmp_type->kind = ARRAY;
@@ -202,7 +203,9 @@ Symbol_ptr Dec(AST_node* cur, Type_ptr specifier_type) {
     // Dec -> VarDec
     Symbol_ptr tmp = VarDec(cur->child[0], specifier_type);
     // Dec -> VarDec ASSIGNOP Exp
-    Exp(cur->child[2]);
+	if (cur->child_num == 3){
+		Exp(cur->child[2]);
+	}
     return tmp;
 }
 
@@ -217,6 +220,7 @@ void CompSt(AST_node* cur) {
         StmtList(cur->child[2]);
     }
 }
+
 void StmtList(AST_node* cur) {
     // StmtList -> Stmt StmtList
     Stmt(cur->child[0]);
@@ -224,11 +228,85 @@ void StmtList(AST_node* cur) {
         StmtList(cur->child[1]);
     }
 }
-void Stmt(AST_node* cur) { return; }
+
+void Stmt(AST_node* cur) {
+    // Stmt -> Exp SEMI
+    if (astcmp(0, Exp)) {
+        Exp(cur->child[0]);
+    }
+    // Stmt -> RETURN Exp SEMI
+    else if (astcmp(0, RETURN)) {
+        Exp(cur->child[1]);
+    }
+    // Stmt -> WHILE LP Exp RP Stmt
+    // Stmt -> IF LP Exp RP Stmt
+    else if (cur->child_num == 5) {
+        Exp(cur->child[2]);
+        Stmt(cur->child[4]);
+    }
+    // Stmt -> IF LP Exp RP Stmt ELSE Stmt
+    else if (cur->child_num == 7) {
+        Exp(cur->child[2]);
+        Stmt(cur->child[4]);
+        Stmt(cur->child[6]);
+    }
+    // Stmt -> CompSt
+    else if (astcmp(0, CompSt)) {
+        CompSt(cur->child[0]);
+    }
+    return;
+}
 
 /*** Expression ***/
 
-void Exp(AST_node* cur) { return; }
+void Exp(AST_node* cur) {
+    // ID LP Args RP
+    // ID LP RP
+    if (astcmp(1, LP)) {
+        return;
+    }
+    // LP Exp RP
+    else if (astcmp(0, LP)) {
+        Exp(cur->child[1]);
+    }
+    // Exp LB Exp RB
+    else if (astcmp(1, LB)) {
+        Exp(cur->child[0]);
+        Exp(cur->child[2]);
+    }
+    // Exp DOT ID
+    else if (astcmp(1, DOT)) {
+        Exp(cur->child[0]);
+    }
+    // Exp ASSIGNOP Exp
+    else if (astcmp(1, ASSIGNOP)) {
+        Exp(cur->child[1]);
+    }
+    // Exp AND Exp
+    // Exp OR Exp
+    // Exp RELOP Exp
+    // Exp PLUS Exp
+    // Exp MINUS Exp
+    // Exp STAR Exp
+    // Exp DIV Exp
+    else if (cur->child_num == 3) {
+        Exp(cur->child[1]);
+    }
+    // MINUS Exp
+    // NOT Exp
+    else if (cur->child_num == 2) {
+        Exp(cur->child[1]);
+    }
+    // ID
+    else if (astcmp(0, ID)) {
+    }
+    // INT
+    else if (astcmp(0, INT)) {
+    }
+    // FLOAT
+    else if (astcmp(0, FLOAT)) {
+    }
+}
 
 /*--------------------------------------------------------------------
  * semantic.c

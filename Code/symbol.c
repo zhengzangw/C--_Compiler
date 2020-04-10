@@ -63,9 +63,9 @@ const char* kind_name[] = {"BASIC", "ARRAY", "STRUCT", "FUNC"};
 const char* basic_name[] = {"UNKNOWN", "INT", "FLOAT"};
 void log_symbol(Symbol_ptr node) {
     if (node->is_structrue) {
-        printf("%10s:%-6s:", node->name, "PROTO");
+        printf("%-6s:%s:", "PROTO", node->name);
     } else {
-        printf("%10s:%-6s:", node->name, kind_name[node->type->kind]);
+        printf("%-6s:%s:", kind_name[node->type->kind], node->name);
     }
 }
 void log_type(Type_ptr type) {
@@ -83,7 +83,7 @@ void log_type(Type_ptr type) {
             printf("(");
             tmp = type->u.function.params;
             for (int i = 0; i < type->u.function.params_num; ++i) {
-                if (i > 0) printf(",");
+                if (i > 0) printf(", ");
                 log_symbol(tmp);
                 log_type(tmp->type);
                 tmp = tmp->cross_nxt;
@@ -91,13 +91,13 @@ void log_type(Type_ptr type) {
             printf(")");
             break;
         case STRUCTURE:
-            printf("{");
+            printf("{\n");
             tmp = type->u.structure;
             while (tmp) {
                 log_symbol(tmp);
                 log_type(tmp->type);
                 tmp = tmp->cross_nxt;
-                printf(";");
+                printf(";\n");
             }
             printf("}");
             break;
