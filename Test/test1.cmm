@@ -13,6 +13,7 @@ int test(int a, float bb, float c[10]){
 }
 int a;
 int ttt, ttt, ttt;
+int ttt;
 float b[10][20][100][0xf];
 int j();
 int main()
@@ -21,8 +22,13 @@ int main()
 	j = i + 1;
 	if (i == 0){
 		int j = 3;
+		int big_str;
+		float ttt, test;
 		test();
 		i = j();
 		test2();
 	}
 }
+int big_str;
+int this_should_be_no_indent;
+int test();

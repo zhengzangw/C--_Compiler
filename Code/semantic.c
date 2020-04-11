@@ -69,8 +69,11 @@ void ExtDef(AST_node* cur) {
 void ExtDecList(AST_node* cur, Type_ptr specifier_type) {
     // ExtDecList -> VarDec
     Symbol_ptr tmp = VarDec(cur->child[0], specifier_type);
-    // TODO Error[3]
-    hash_insert(tmp);
+    // Error[3]
+    if (hash_insert(tmp)) {
+        semantic_error_option(3, cur->child[0]->lineno, "Redefined variable",
+                              tmp->name);
+    }
     // ExtDecList -> VarDec COMMA ExtDecList
     if (cur->child_num == 3) ExtDecList(cur->child[2], specifier_type);
 }
@@ -108,7 +111,7 @@ Type_ptr StructSpecifier(AST_node* cur) {
         Type_ptr type = (Type_ptr)malloc(sizeof(Type));
         type->kind = STRUCTURE;
         region_depth += 1;
-        type->u.structure = DefList(cur->child[3]);
+        if (cur->child[3]) type->u.structure = DefList(cur->child[3]);
         compst_destroy(region_depth);
         region_depth -= 1;
         if (cur->child[1]) {
@@ -131,8 +134,11 @@ void FunDec(AST_node* cur, Type_ptr specifier_type, int is_dec) {
     tmp->type = (Type_ptr)malloc(sizeof(Type));
     tmp->type->kind = FUNCTION;
     tmp->type->u.function.ret = specifier_type;
-    // TODO Error[4]
-    hash_insert(tmp);
+    // Error[4]
+    if (hash_insert(tmp)) {
+        semantic_error_option(4, cur->child[0]->lineno, "Redefined function",
+                              tmp->name);
+    }
     // FunDec -> ID LP RP
     if (cur->child_num == 3) {
         tmp->type->u.function.params_num = 0;
@@ -153,8 +159,11 @@ void FunDec(AST_node* cur, Type_ptr specifier_type, int is_dec) {
 Symbol_ptr VarList(AST_node* cur, Symbol_ptr func) {
     func->type->u.function.params_num++;
     Symbol_ptr tmp = ParamDec(cur->child[0]);
-    // TODO Error[3]
-    hash_insert(tmp);
+    // Error[3]
+    if (hash_insert(tmp)) {
+        semantic_error_option(3, cur->child[0]->lineno, "Redefined variable",
+                              tmp->name);
+    }
     // VarList -> ParamDec COMMA VarList
     if (cur->child_num == 3) {
         tmp->cross_nxt = VarList(cur->child[2], func);
@@ -215,8 +224,11 @@ Symbol_ptr Def(AST_node* cur) {
 Symbol_ptr DecList(AST_node* cur, Type_ptr specifier_type) {
     // DecList -> Dec
     Symbol_ptr tmp = Dec(cur->child[0], specifier_type);
-    // TODO Error[3]
-    hash_insert(tmp);
+    // Error[3]
+    if (hash_insert(tmp)) {
+        semantic_error_option(3, cur->child[0]->lineno, "Redefined variable",
+                              tmp->name);
+    }
     // DecList -> Dec COMMA DecList
     if (cur->child_num == 3) {
         tmp->cross_nxt = DecList(cur->child[2], specifier_type);
@@ -296,7 +308,7 @@ void Exp(AST_node* cur) {
     // ID LP RP
     if (astcmp(1, LP)) {
         // TODO Error[9], Error[11]
-		if (!hash_find(cur->child[0]->val, SEARCH_FUNCTION)) {
+        if (!hash_find(cur->child[0]->val, SEARCH_FUNCTION)) {
             semantic_error_option(2, cur->child[0]->lineno,
                                   "Undefined function", cur->child[0]->val);
         }

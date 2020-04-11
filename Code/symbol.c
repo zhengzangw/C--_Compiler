@@ -60,7 +60,13 @@ int hash_same(Symbol_ptr node_new, Symbol_ptr node_old) {
     }
     if (strcmp(node_new->name, node_new->name) == 0 &&
         node_new->region <= node_old->region) {
-        return 1;
+			switch (node_new->type->kind){
+				case FUNCTION:
+					if (node_old->type->kind==FUNCTION) return 1;
+					break;
+				default:
+					if (node_old->type->kind!=FUNCTION) return 1;
+			}
     }
     return 0;
 }
