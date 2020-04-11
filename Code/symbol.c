@@ -92,14 +92,26 @@ int hash_insert(Symbol_ptr node) {
     return 0;
 }
 
-Symbol* hash_search(char* name) {
+Symbol* hash_find(char* name, SEARCH_TYPE kind) {
     unsigned int index = hash_pjw(name);
     Symbol_ptr cur = hash_table[index];
     Symbol_ptr opt = NULL;
     while (cur) {
         if (strcmp(name, hash_table[index]->name) == 0) {
             if (!opt || opt->region < cur->region) {
-                opt = cur;
+				switch (kind) {
+					case SEARCH_FUNCTION:
+						if (cur->type->kind == FUNCTION) opt = cur;
+						break;
+					case SEARCH_VARIABLE:
+						if (cur->type->kind != FUNCTION && !cur->is_proto) opt = cur;
+						break;
+					case SEARCH_PROTO:
+						if (cur->type->kind == STRUCTURE && cur->is_proto) opt = cur;
+						break;
+					case SEARCH_ALL:
+						opt = cur;
+				}
             }
         }
         cur = cur->nxt;

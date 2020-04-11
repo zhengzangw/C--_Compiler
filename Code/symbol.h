@@ -15,6 +15,7 @@
 
 typedef enum _BASIC_TYPE { UNKNOWN, INT, FLOAT } BASIC_TYPE;
 typedef enum _KIND { BASIC, ARRAY, STRUCTURE, FUNCTION } KIND;
+typedef enum _SEARCH_TYPE {SEARCH_ALL, SEARCH_VARIABLE, SEARCH_FUNCTION, SEARCH_PROTO} SEARCH_TYPE;
 typedef struct _Type* Type_ptr;
 typedef struct _Symbol* Symbol_ptr;
 typedef struct _Type {
@@ -56,9 +57,8 @@ Symbol_ptr new_symbol(int region);
 extern Symbol* hash_table[SYMBOL_SIZE];
 
 void hash_create();
-int hash_insert();
-Symbol* hash_search();
-void hash_destroy();
+int hash_insert(Symbol_ptr node);
+Symbol* hash_find(char* name, SEARCH_TYPE kind);
 
 extern Symbol* compst[COMPST_SIZE];
 void compst_destroy(int depth);

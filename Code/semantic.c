@@ -22,9 +22,7 @@
     printf("Error type %d at Line %d: %s \"%s\".\n", type, lineno, desc, letter)
 
 int region_depth = 0;
-int equal(Type_ptr type_1, Type_ptr type_2){
-	return 1;
-}
+int equal(Type_ptr type_1, Type_ptr type_2) { return 1; }
 
 /*** High-Level Definitions ***/
 
@@ -56,12 +54,12 @@ void ExtDef(AST_node* cur) {
         FunDec(cur->child[1], type, false);
         CompSt(cur->child[2]);
     }
-	// ExtDef -> Specifier FunDec SEMI
-	// TODO Error[18], Error[19]
-	else if (astcmp(1, FunDec) && astcmp(2, SEMI)) {
-		Type_ptr type = Specifier(cur->child[0]);
-		FunDec(cur->child[1], type, true);
-	}
+    // ExtDef -> Specifier FunDec SEMI
+    // TODO Error[18], Error[19]
+    else if (astcmp(1, FunDec) && astcmp(2, SEMI)) {
+        Type_ptr type = Specifier(cur->child[0]);
+        FunDec(cur->child[1], type, true);
+    }
     // ExtDef -> Specifier SEMI
     else {
         return;
@@ -101,7 +99,7 @@ Type_ptr StructSpecifier(AST_node* cur) {
     // StructSpecifier -> STRUCT Tag
     if (cur->child_num == 2) {
         // TODO Error[17]
-        Symbol_ptr struct_tmp = hash_search(cur->child[1]->val);
+        Symbol_ptr struct_tmp = hash_find(cur->child[1]->val, SEARCH_PROTO);
         return struct_tmp->type;
     }
     // StructSpecifier -> STRUCT OptTag LC DefList RC
@@ -109,10 +107,10 @@ Type_ptr StructSpecifier(AST_node* cur) {
         // TODO Error[15]
         Type_ptr type = (Type_ptr)malloc(sizeof(Type));
         type->kind = STRUCTURE;
-		region_depth += 1;
+        region_depth += 1;
         type->u.structure = DefList(cur->child[3]);
-		compst_destroy(region_depth);
-		region_depth -= 1;
+        compst_destroy(region_depth);
+        region_depth -= 1;
         if (cur->child[1]) {
             Symbol_ptr prototype = new_symbol(region_depth);
             prototype->name = cur->child[1]->child[0]->val;
@@ -143,12 +141,12 @@ void FunDec(AST_node* cur, Type_ptr specifier_type, int is_dec) {
     // FunDec -> ID LP VarList RP
     else {
         tmp->type->u.function.params_num = 0;
-		region_depth += 1;
+        region_depth += 1;
         tmp->type->u.function.params = VarList(cur->child[2], tmp);
-		if (is_dec) {
-			compst_destroy(region_depth);
-		}
-		region_depth -= 1;
+        if (is_dec) {
+            compst_destroy(region_depth);
+        }
+        region_depth -= 1;
     }
 }
 
@@ -242,7 +240,7 @@ Symbol_ptr Dec(AST_node* cur, Type_ptr specifier_type) {
 /*** Statments ***/
 
 void CompSt(AST_node* cur) {
-	region_depth += 1;
+    region_depth += 1;
     // CompSt -> LC DefList StmtList RC
     if (cur->child[1]) {
         DefList(cur->child[1]);
@@ -250,8 +248,8 @@ void CompSt(AST_node* cur) {
     if (cur->child[2]) {
         StmtList(cur->child[2]);
     }
-	compst_destroy(region_depth);
-	region_depth -= 1;
+    compst_destroy(region_depth);
+    region_depth -= 1;
 }
 
 void StmtList(AST_node* cur) {
@@ -297,7 +295,11 @@ void Exp(AST_node* cur) {
     // ID LP Args RP
     // ID LP RP
     if (astcmp(1, LP)) {
-        // TODO Error[2], Error[9], Error[11]
+        // TODO Error[9], Error[11]
+		if (!hash_find(cur->child[0]->val, SEARCH_FUNCTION)) {
+            semantic_error_option(2, cur->child[0]->lineno,
+                                  "Undefined function", cur->child[0]->val);
+        }
         return;
     }
     // LP Exp RP
@@ -340,10 +342,11 @@ void Exp(AST_node* cur) {
     }
     // ID
     else if (astcmp(0, ID)) {
-		// Error[1]
-		if (hash_search(cur->child[0]->val)==NULL){
-			semantic_error_option(1, cur->child[0]->lineno, "Undefined variable", cur->child[0]->val);
-		}
+        // Error[1]
+        if (!hash_find(cur->child[0]->val, SEARCH_VARIABLE)) {
+            semantic_error_option(1, cur->child[0]->lineno,
+                                  "Undefined variable", cur->child[0]->val);
+        }
     }
     // INT
     else if (astcmp(0, INT)) {
