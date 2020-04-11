@@ -24,6 +24,8 @@
 #define OUT(x) printf("\e[31m%s\e[0m\n", x)
 #define OUTINT(x) printf("\e[31m%d\e[0m\n", x)
 #define OUTFLOAT(x) printf("\e[31m%s\e[0m\n", x)
+#define true 1
+#define false 0
 
 //#define YYDEBUG 1
 // extern int yydebug;

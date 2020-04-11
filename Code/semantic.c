@@ -48,11 +48,16 @@ void ExtDef(AST_node* cur) {
         ExtDecList(cur->child[1], type);
     }
     // ExtDef -> Specifier FunDec CompSt
-    else if (astcmp(1, FunDec)) {
+    else if (astcmp(1, FunDec) && astcmp(2, CompSt)) {
         Type_ptr type = Specifier(cur->child[0]);
-        FunDec(cur->child[1], type);
+        FunDec(cur->child[1], type, false);
         CompSt(cur->child[2]);
     }
+	// ExtDef -> Specifier FunDec SEMI
+	else if (astcmp(1, FunDec) && astcmp(2, SEMI)) {
+		Type_ptr type = Specifier(cur->child[0]);
+		FunDec(cur->child[1], type, true);
+	}
     // ExtDef -> Specifier SEMI
     else {
         return;
@@ -118,7 +123,7 @@ Type_ptr StructSpecifier(AST_node* cur) {
 
 /*** Declarators ***/
 
-void FunDec(AST_node* cur, Type_ptr specifier_type) {
+void FunDec(AST_node* cur, Type_ptr specifier_type, int is_dec) {
     Symbol_ptr tmp = new_symbol(region_depth);
     tmp->name = cur->child[0]->val;
     tmp->type = (Type_ptr)malloc(sizeof(Type));
@@ -136,6 +141,9 @@ void FunDec(AST_node* cur, Type_ptr specifier_type) {
         tmp->type->u.function.params_num = 0;
 		region_depth += 1;
         tmp->type->u.function.params = VarList(cur->child[2], tmp);
+		if (is_dec) {
+			compst_destroy(region_depth);
+		}
 		region_depth -= 1;
     }
 }

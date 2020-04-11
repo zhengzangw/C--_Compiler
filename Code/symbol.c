@@ -22,7 +22,7 @@ Symbol_ptr new_symbol(int region) {
     tmp->region = region;
     tmp->is_activate = 1;
     tmp->is_proto = 0;
-	return tmp;
+    return tmp;
 }
 
 Symbol_ptr hash_table[SYMBOL_SIZE];
@@ -82,11 +82,10 @@ int hash_insert(Symbol_ptr node) {
     } else {
         Symbol_ptr cur = hash_table[index];
         while (cur->nxt) {
-            if (hash_same(node, cur)) {
-                return 1;
-            }
+            if (hash_same(node, cur)) return 1;
             cur = cur->nxt;
         }
+        if (hash_same(node, cur)) return 1;
         cur->nxt = node;
     }
     compst_insert(node);
@@ -151,7 +150,7 @@ void log_type(Type_ptr type) {
 }
 
 void _hash_print_all_symbols() {
-	printf("######## SYMBOLE TABLE ########\n");
+    printf("######## SYMBOLE TABLE ########\n");
     for (int i = 0; i < SYMBOL_SIZE; ++i) {
         Symbol_ptr cur = hash_table[i];
         while (cur) {
@@ -161,15 +160,15 @@ void _hash_print_all_symbols() {
             cur = cur->nxt;
         }
     }
-	printf("######## SYMBOLE TABLE ########\n");
+    printf("######## SYMBOLE TABLE ########\n");
 }
 
-void _compst_print_all_symbols(int region){
-	for (Symbol_ptr p=compst[region]; p; p=p->nxt){
-		log_symbol(p);
-		log_type(p->type);
-		printf("\n");
-	}
+void _compst_print_all_symbols(int region) {
+    for (Symbol_ptr p = compst[region]; p; p = p->nxt) {
+        log_symbol(p);
+        log_type(p->type);
+        printf("\n");
+    }
 }
 
 /*--------------------------------------------------------------------

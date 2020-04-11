@@ -105,6 +105,8 @@ ExtDef
       { errorB("Missing ';'"); }
     | Specifier FunDec CompSt
       { generate(ExtDef,$$,@$,3,$1,$2,$3); }
+		| Specifier FunDec SEMI
+			{ generate(ExtDef,$$,@$,3,$1,$2,$3); }
     | Specifier error CompSt
       { errorB("error in function definition"); }
     ;
