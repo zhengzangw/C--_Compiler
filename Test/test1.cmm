@@ -4,6 +4,7 @@ struct big_str {
 	float dd[10];
 	int x,y;
 } helpme;
+int test(int a, float bb, float c[10]);
 int test(int a, float bb, float c[10]){
 	return 0;
 }
