@@ -57,7 +57,7 @@ void Stmt(AST_node* cur);
 
 /*** Expression ***/
 
-void Exp(AST_node* cur);
+Type_ptr Exp(AST_node* cur);
 
 #endif
 

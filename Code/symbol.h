@@ -42,6 +42,10 @@ typedef struct _Type {
     } u;
 } Type;
 
+static const Type INT_TYPE = {BASIC, {INT}};
+static const Type FLOAT_TYPE = {BASIC, {FLOAT}};
+static const Type UNKNOWN_TYPE = {BASIC, {UNKNOWN}};
+
 typedef struct _Symbol {
     char* name;
     Type_ptr type;

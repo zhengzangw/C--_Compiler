@@ -303,7 +303,7 @@ void Stmt(AST_node* cur) {
 
 /*** Expression ***/
 
-void Exp(AST_node* cur) {
+Type_ptr Exp(AST_node* cur) {
     // ID LP Args RP
     // ID LP RP
     if (astcmp(1, LP)) {
@@ -312,7 +312,6 @@ void Exp(AST_node* cur) {
             semantic_error_option(2, cur->child[0]->lineno,
                                   "Undefined function", cur->child[0]->val);
         }
-        return;
     }
     // LP Exp RP
     else if (astcmp(0, LP)) {
@@ -355,17 +354,22 @@ void Exp(AST_node* cur) {
     // ID
     else if (astcmp(0, ID)) {
         // Error[1]
-        if (!hash_find(cur->child[0]->val, SEARCH_VARIABLE)) {
+        Symbol_ptr target = hash_find(cur->child[0]->val, SEARCH_VARIABLE);
+        if (!target) {
             semantic_error_option(1, cur->child[0]->lineno,
                                   "Undefined variable", cur->child[0]->val);
         }
+        return target->type;
     }
     // INT
     else if (astcmp(0, INT)) {
+        return &INT_TYPE;
     }
     // FLOAT
     else if (astcmp(0, FLOAT)) {
+        return &FLOAT_TYPE;
     }
+    return NULL;
 }
 
 /*--------------------------------------------------------------------
