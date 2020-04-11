@@ -1,35 +1,37 @@
-struct big_str {
-	int p,sa,sb;
-	int q,sc,sd;
-	float dd[10];
-	struct in_big_str{
-		int s;
-	} in_here;
-	int x,y;
-} helpme;
-int test(int a, float bb, float c[10]);
-int test(int a, float bb, float c[10]){
-	return 0;
+//test1p
+int i;
+float oh(){}
+struct none {
+	int nothing;
+};
+struct s1 {
+	int a;
+	float b[10][20][30];
+	struct s1_1 {
+		struct none s1;
+		int cc[1];
+	} test;
+	struct none awsl;
+	int c,d;
+};
+struct why {};
+struct s2 {
+	int d;
+	float k[15][10][1];
+	struct s1_1 {
+		struct none cc;
+		int s1;
+	} test;
+	struct none nmsl;
+	int dp,p;
+} p2;
+int main(){
+	float i;
+	float j = i;
+	float a[3] = oh();
+	oh();
 }
-int a;
-int ttt, ttt, ttt;
-int ttt;
-float b[10][20][100][0xf];
-int j();
-int main()
-{
-	int i = 0;
-	j = i + 1;
-	if (i == 0){
-		int j = 3.0 + 3;
-		int big_str;
-		float ttt, test;
-		j = 1.3;
-		test();
-		i = j();
-		test2();
-	}
+int main2(){
+	float j =i;
+	struct s1 p1 = p2;
 }
-int big_str;
-int this_should_be_no_indent;
-int test();

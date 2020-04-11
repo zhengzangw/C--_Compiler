@@ -103,7 +103,7 @@ Symbol* hash_find(char* name, SEARCH_TYPE kind) {
     Symbol_ptr cur = hash_table[index];
     Symbol_ptr opt = NULL;
     while (cur) {
-        if (strcmp(name, hash_table[index]->name) == 0) {
+        if (cur->is_activate && strcmp(name, cur->name) == 0) {
             if (!opt || opt->region < cur->region) {
 				switch (kind) {
 					case SEARCH_FUNCTION:
