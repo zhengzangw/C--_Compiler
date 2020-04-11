@@ -11,6 +11,7 @@
 #define _SYMBOL_H
 
 #define SYMBOL_SIZE 32767
+#define COMPST_SIZE 255
 
 typedef enum _BASIC_TYPE { UNKNOWN, INT, FLOAT } BASIC_TYPE;
 typedef enum _KIND { BASIC, ARRAY, STRUCTURE, FUNCTION } KIND;
@@ -43,14 +44,25 @@ typedef struct _Type {
 typedef struct _Symbol {
     char* name;
     Type_ptr type;
-    Symbol_ptr nxt, cross_nxt;
-    int is_structrue;
+	// nxt: the next symbol in same hash slot
+	// cross_nxt: the components of structure/function
+	// compst_nxt: the next symbol in same block
+    Symbol_ptr nxt, cross_nxt, compst_nxt;
+    int region, is_activate, is_proto;
 } Symbol;
 
+Symbol_ptr new_symbol(int region);
+
 extern Symbol* hash_table[SYMBOL_SIZE];
+
 void hash_create();
 int hash_insert();
 Symbol* hash_search();
+void hash_destroy();
+
+extern Symbol* compst[COMPST_SIZE];
+void compst_destroy(int depth);
+
 void _hash_print_all_symbols();
 
 #endif

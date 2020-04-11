@@ -21,6 +21,8 @@
 #define semantic_error_option(type, lineno, desc, letter) \
     printf("Error type %d at Line %d: %s \"%s\".\n", type, lineno, desc, letter)
 
+int region_depth = 0;
+
 /*** High-Level Definitions ***/
 
 void Program(AST_node* cur) {
@@ -98,11 +100,14 @@ Type_ptr StructSpecifier(AST_node* cur) {
         // NOTE Error[15]
         Type_ptr type = (Type_ptr)malloc(sizeof(Type));
         type->kind = STRUCTURE;
+		region_depth += 1;
         type->u.structure = DefList(cur->child[3]);
+		compst_destroy(region_depth);
+		region_depth -= 1;
         if (cur->child[1]) {
-            Symbol_ptr prototype = (Symbol_ptr)malloc(sizeof(Symbol));
+            Symbol_ptr prototype = new_symbol(region_depth);
             prototype->name = cur->child[1]->child[0]->val;
-            prototype->is_structrue = 1;
+            prototype->is_proto = 1;
             prototype->type = type;
             // NOTE Error[16]
             hash_insert(prototype);
@@ -114,7 +119,7 @@ Type_ptr StructSpecifier(AST_node* cur) {
 /*** Declarators ***/
 
 void FunDec(AST_node* cur, Type_ptr specifier_type) {
-    Symbol_ptr tmp = (Symbol_ptr)malloc(sizeof(Symbol));
+    Symbol_ptr tmp = new_symbol(region_depth);
     tmp->name = cur->child[0]->val;
     tmp->type = (Type_ptr)malloc(sizeof(Type));
     tmp->type->kind = FUNCTION;
@@ -129,7 +134,9 @@ void FunDec(AST_node* cur, Type_ptr specifier_type) {
     // FunDec -> ID LP VarList RP
     else {
         tmp->type->u.function.params_num = 0;
+		region_depth += 1;
         tmp->type->u.function.params = VarList(cur->child[2], tmp);
+		region_depth -= 1;
     }
 }
 
@@ -168,7 +175,7 @@ Symbol_ptr VarDec(AST_node* cur, Type_ptr specifier_type) {
     }
     // VarDec -> ID
     else {
-        Symbol_ptr tmp = (Symbol_ptr)malloc(sizeof(Symbol));
+        Symbol_ptr tmp = new_symbol(region_depth);
         tmp->name = cur->child[0]->val;
         tmp->type = specifier_type;
         return tmp;
@@ -223,6 +230,7 @@ Symbol_ptr Dec(AST_node* cur, Type_ptr specifier_type) {
 /*** Statments ***/
 
 void CompSt(AST_node* cur) {
+	region_depth += 1;
     // CompSt -> LC DefList StmtList RC
     if (cur->child[1]) {
         DefList(cur->child[1]);
@@ -230,6 +238,8 @@ void CompSt(AST_node* cur) {
     if (cur->child[2]) {
         StmtList(cur->child[2]);
     }
+	compst_destroy(region_depth);
+	region_depth -= 1;
 }
 
 void StmtList(AST_node* cur) {
