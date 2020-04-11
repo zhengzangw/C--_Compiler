@@ -22,7 +22,7 @@
     printf("Error type %d at Line %d: %s \"%s\".\n", type, lineno, desc, letter)
 
 int region_depth = 0;
-int equal(Type_ptr type_1, Type_ptr type_2) { return 1; }
+int equal_type(Type_ptr type_1, Type_ptr type_2) { return 1; }
 
 /*** High-Level Definitions ***/
 
@@ -187,9 +187,20 @@ Symbol_ptr VarDec(AST_node* cur, Type_ptr specifier_type) {
         Symbol_ptr tmp = VarDec(cur->child[0], specifier_type);
         Type_ptr tmp_type = (Type_ptr)malloc(sizeof(Type));
         tmp_type->kind = ARRAY;
+        tmp_type->u.array.elem = NULL;
         tmp_type->u.array.size = atoi(cur->child[2]->val);
-        tmp_type->u.array.elem = tmp->type;
-        tmp->type = tmp_type;
+        // int a[10][20][30] -> [10][20][30]a
+        Type_ptr ite = tmp->type;
+        if (ite->kind != ARRAY) {
+            tmp_type->u.array.elem = ite;
+            tmp->type = tmp_type;
+        } else {
+            while (ite->u.array.elem->kind == ARRAY) {
+                ite = ite->u.array.elem;
+            }
+			tmp_type->u.array.elem = ite->u.array.elem;
+			ite->u.array.elem = tmp_type;
+        }
         return tmp;
     }
     // VarDec -> ID
@@ -311,28 +322,40 @@ Type_ptr Exp(AST_node* cur) {
         if (!hash_find(cur->child[0]->val, SEARCH_FUNCTION)) {
             semantic_error_option(2, cur->child[0]->lineno,
                                   "Undefined function", cur->child[0]->val);
+            return &UNKNOWN_TYPE;
         }
+        Symbol_ptr type_func = hash_find(cur->child[0]->val, SEARCH_FUNCTION);
+        return type_func->type->u.function.ret;
     }
     // LP Exp RP
     else if (astcmp(0, LP)) {
-        Exp(cur->child[1]);
+        return Exp(cur->child[1]);
     }
     // Exp LB Exp RB
     else if (astcmp(1, LB)) {
         // TODO Error[10], Error[12]
-        Exp(cur->child[0]);
-        Exp(cur->child[2]);
+        Type_ptr type_array = Exp(cur->child[0]);
+        Type_ptr type_int = Exp(cur->child[2]);
+        return type_array->u.array.elem;
     }
     // Exp DOT ID
     else if (astcmp(1, DOT)) {
         // TODO Error[13], Error[14]
-        Exp(cur->child[0]);
+        Type_ptr type_strcut = Exp(cur->child[0]);
+        for (Symbol_ptr p = type_strcut->u.structure; p; p = p->cross_nxt) {
+            if (strcmp(p->name, cur->child[2]->name) == 0) {
+                return p->type;
+            }
+        }
     }
     // Exp ASSIGNOP Exp
     else if (astcmp(1, ASSIGNOP)) {
         // TODO Error[5], Error[6]
-        Exp(cur->child[0]);
-        Exp(cur->child[2]);
+        Type_ptr type_1 = Exp(cur->child[0]);
+        Type_ptr type_2 = Exp(cur->child[2]);
+        if (equal_type(type_1, type_2)) {
+            return type_2;
+        }
     }
     // Exp AND Exp
     // Exp OR Exp
@@ -343,13 +366,16 @@ Type_ptr Exp(AST_node* cur) {
     // Exp DIV Exp
     else if (cur->child_num == 3) {
         // TODO Error[7]
-        Exp(cur->child[0]);
-        Exp(cur->child[2]);
+        Type_ptr type_1 = Exp(cur->child[0]);
+        Type_ptr type_2 = Exp(cur->child[2]);
+        if (equal_type(type_1, type_2)) {
+            return type_2;
+        }
     }
     // MINUS Exp
     // NOT Exp
     else if (cur->child_num == 2) {
-        Exp(cur->child[1]);
+        return Exp(cur->child[1]);
     }
     // ID
     else if (astcmp(0, ID)) {
@@ -358,6 +384,7 @@ Type_ptr Exp(AST_node* cur) {
         if (!target) {
             semantic_error_option(1, cur->child[0]->lineno,
                                   "Undefined variable", cur->child[0]->val);
+            return &UNKNOWN_TYPE;
         }
         return target->type;
     }
