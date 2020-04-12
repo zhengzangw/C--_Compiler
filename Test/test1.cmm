@@ -5,7 +5,9 @@ int main(){
 	int b;
 	a = 10;
 	b = f(a[2]);
-	a[2] = a[1] < b[1];
+	a[2] = a[1] + 1;
 	b[1] = 2;
+	b = b();
+	b = bb();
 	return 1.0;
 }

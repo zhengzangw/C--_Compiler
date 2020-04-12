@@ -378,48 +378,53 @@ Type_ptr Exp(AST_node* cur) {
     // ID LP Args RP
     // ID LP RP
     if (astcmp(1, LP)) {
-        // TODO Error[11]
-        // Error[2]
+        // Error[2], Error[11]
         if (!hash_find(cur->child[0]->val, SEARCH_FUNCTION)) {
-            semantic_error_option(2, cur->child[0]->lineno,
-                                  "Undefined function", cur->child[0]->val);
-        } else {
-            Symbol_ptr type_func =
-                hash_find(cur->child[0]->val, SEARCH_FUNCTION);
-            // Error[9]
-            int applicable = 1;
-            if (type_func->type->u.function.params == NULL) {
-                if (cur->child_num > 3) applicable = 0;
+            if (hash_find(cur->child[0]->val, SEARCH_VARIABLE)) {
+                semantic_error_option(2, cur->child[0]->lineno,
+                                      "Not a function", cur->child[0]->val);
             } else {
-                if (cur->child_num == 3)
-                    applicable = 0;
-                else {
-                    AST_node* args = cur->child[2];
-                    Symbol_ptr func_args = type_func->type->u.function.params;
-                    while (args && func_args) {
-                        Type_ptr type_arg = Exp(args->child[0]);
-                        if (!equal_type(type_arg, func_args->type)) {
-                            applicable = 0;
-                            break;
-                        }
-                        if (args->child_num == 3) {
-                            args = args->child[2];
-                        } else {
-                            args = NULL;
-                        }
-                        func_args = func_args->cross_nxt;
-                    }
-                    if (args || func_args) applicable = 0;
-                }
+                semantic_error_option(2, cur->child[0]->lineno,
+                                      "Undefined function", cur->child[0]->val);
             }
+            return &UNKNOWN_TYPE;
+        }
 
-            if (!applicable) {
-                semantic_error(9, cur->child[0]->lineno,
-                               "Function not applicable for arguments");
-            } else {
-                return type_func->type->u.function.ret;
+        Symbol_ptr type_func = hash_find(cur->child[0]->val, SEARCH_FUNCTION);
+        // Error[9]
+        int applicable = 1;
+        if (type_func->type->u.function.params == NULL) {
+            if (cur->child_num > 3) applicable = 0;
+        } else {
+            if (cur->child_num == 3)
+                applicable = 0;
+            else {
+                AST_node* args = cur->child[2];
+                Symbol_ptr func_args = type_func->type->u.function.params;
+                while (args && func_args) {
+                    Type_ptr type_arg = Exp(args->child[0]);
+                    if (!equal_type(type_arg, func_args->type)) {
+                        applicable = 0;
+                        break;
+                    }
+                    if (args->child_num == 3) {
+                        args = args->child[2];
+                    } else {
+                        args = NULL;
+                    }
+                    func_args = func_args->cross_nxt;
+                }
+                if (args || func_args) applicable = 0;
             }
         }
+
+        if (!applicable) {
+            semantic_error(9, cur->child[0]->lineno,
+                           "Function not applicable for arguments");
+            return &UNKNOWN_TYPE;
+        }
+
+        return type_func->type->u.function.ret;
     }
     // LP Exp RP
     else if (astcmp(0, LP)) {
@@ -432,10 +437,10 @@ Type_ptr Exp(AST_node* cur) {
         // Error[10]
         if (type_array->kind != ARRAY) {
             semantic_error(10, cur->child[0]->lineno, "Not an array");
-        } else {
-            Type_ptr type_int = Exp(cur->child[2]);
-            return type_array->u.array.elem;
+            return &UNKNOWN_TYPE;
         }
+        Type_ptr type_int = Exp(cur->child[2]);
+        return type_array->u.array.elem;
     }
     // Exp DOT ID
     else if (astcmp(1, DOT)) {
@@ -460,15 +465,16 @@ Type_ptr Exp(AST_node* cur) {
             semantic_error(
                 6, cur->child[1]->lineno,
                 "The left-hand side of an assignment must be a variable");
+            return &UNKNOWN_TYPE;
         }
         Type_ptr type_2 = Exp(cur->child[2]);
         // Error[5]
-        if (equal_type(type_1, type_2)) {
-            return type_2;
-        } else {
+        if (!equal_type(type_1, type_2)) {
             semantic_error(5, cur->child[1]->lineno,
                            "Type mismatched for assignment");
+            return &UNKNOWN_TYPE;
         }
+        return type_2;
     }
     // Exp AND Exp
     // Exp OR Exp
@@ -490,22 +496,24 @@ Type_ptr Exp(AST_node* cur) {
                                "Type mismatched for operands");
                 return &UNKNOWN_TYPE;
             }
-        } else {
-            if (type_1->kind != BASIC || type_2->kind != BASIC) {
-                semantic_error(7, cur->child[1]->lineno,
-                               "Type mismatched for operands");
-                return &UNKNOWN_TYPE;
-            }
         }
         if (type_1->kind != BASIC || type_2->kind != BASIC) {
             semantic_error(7, cur->child[1]->lineno,
                            "Type mismatched for operands");
-        } else if (equal_type(type_1, type_2)) {
-            return type_2;
-        } else {
+            return &UNKNOWN_TYPE;
+        }
+        if (type_1->kind != BASIC || type_2->kind != BASIC) {
             semantic_error(7, cur->child[1]->lineno,
                            "Type mismatched for operands");
+            return &UNKNOWN_TYPE;
         }
+        if (!equal_type(type_1, type_2)) {
+            semantic_error(7, cur->child[1]->lineno,
+                           "Type mismatched for operands");
+            return &UNKNOWN_TYPE;
+        }
+
+        return type_2;
     }
     // MINUS Exp
     // NOT Exp
@@ -519,9 +527,9 @@ Type_ptr Exp(AST_node* cur) {
         if (!target) {
             semantic_error_option(1, cur->child[0]->lineno,
                                   "Undefined variable", cur->child[0]->val);
-        } else {
-            return target->type;
+            return &UNKNOWN_TYPE;
         }
+        return target->type;
     }
     // INT
     else if (astcmp(0, INT)) {
