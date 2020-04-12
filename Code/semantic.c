@@ -388,23 +388,28 @@ Type_ptr Exp(AST_node* cur) {
                 hash_find(cur->child[0]->val, SEARCH_FUNCTION);
             // Error[9]
             int applicable = 1;
-            if (type_func->cross_nxt == NULL && cur->child[0]->child_num > 3)
-                applicable = 1;
-            else {
-                AST_node* args = cur->child[2];
-                Symbol_ptr func_args = type_func->cross_nxt;
-                while (args && func_args) {
-                    Type_ptr type_arg = Exp(args->child[0]);
-                    if (!equal_type(type_arg, func_args->type)) {
-                        applicable = 0;
-                        break;
+            if (type_func->type->u.function.params == NULL) {
+                if (cur->child_num > 3) applicable = 0;
+            } else {
+                if (cur->child_num == 3)
+                    applicable = 0;
+                else {
+                    AST_node* args = cur->child[2];
+                    Symbol_ptr func_args = type_func->type->u.function.params;
+                    while (args && func_args) {
+                        Type_ptr type_arg = Exp(args->child[0]);
+                        if (!equal_type(type_arg, func_args->type)) {
+                            applicable = 0;
+                            break;
+                        }
+                        if (args->child_num == 3) {
+                            args = args->child[2];
+                        } else {
+                            args = NULL;
+                        }
+                        func_args = func_args->cross_nxt;
                     }
-                    if (args->child_num == 3) {
-                        args = args->child[2];
-                    } else {
-                        args = NULL;
-                    }
-                    func_args = func_args->cross_nxt;
+                    if (args || func_args) applicable = 0;
                 }
             }
 
