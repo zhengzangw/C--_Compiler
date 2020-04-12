@@ -93,7 +93,7 @@ void ExtDef(AST_node* cur) {
         Type_ptr type = Specifier(cur->child[0]);
         region_func = FunDec(cur->child[1], type, false);
         CompSt(cur->child[2]);
-		region_func = NULL;
+        region_func = NULL;
     }
     // ExtDef -> Specifier FunDec SEMI
     // TODO Error[18], Error[19]
@@ -196,7 +196,7 @@ Symbol_ptr FunDec(AST_node* cur, Type_ptr specifier_type, int is_dec) {
         }
         region_depth -= 1;
     }
-	return tmp;
+    return tmp;
 }
 
 Symbol_ptr VarList(AST_node* cur, Symbol_ptr func) {
@@ -340,9 +340,10 @@ void Stmt(AST_node* cur) {
     else if (astcmp(0, RETURN)) {
         // Error[8]
         Type_ptr type_ret = Exp(cur->child[1]);
-		if (!equal_type(type_ret, region_func->type)){
-			semantic_error(8, cur->child[0]->lineno, "Type mismatched for return");
-		}
+        if (!equal_type(type_ret, region_func->type)) {
+            semantic_error(8, cur->child[0]->lineno,
+                           "Type mismatched for return");
+        }
     }
     // Stmt -> WHILE LP Exp RP Stmt
     // Stmt -> IF LP Exp RP Stmt
@@ -377,14 +378,42 @@ Type_ptr Exp(AST_node* cur) {
     // ID LP Args RP
     // ID LP RP
     if (astcmp(1, LP)) {
-        // TODO Error[9], Error[11]
+        // TODO Error[11]
+        // Error[2]
         if (!hash_find(cur->child[0]->val, SEARCH_FUNCTION)) {
             semantic_error_option(2, cur->child[0]->lineno,
                                   "Undefined function", cur->child[0]->val);
         } else {
             Symbol_ptr type_func =
                 hash_find(cur->child[0]->val, SEARCH_FUNCTION);
-            return type_func->type->u.function.ret;
+            // Error[9]
+            int applicable = 1;
+            if (type_func->cross_nxt == NULL && cur->child[0]->child_num > 3)
+                applicable = 1;
+            else {
+                AST_node* args = cur->child[2];
+                Symbol_ptr func_args = type_func->cross_nxt;
+                while (args && func_args) {
+                    Type_ptr type_arg = Exp(args->child[0]);
+                    if (!equal_type(type_arg, func_args->type)) {
+                        applicable = 0;
+                        break;
+                    }
+                    if (args->child_num == 3) {
+                        args = args->child[2];
+                    } else {
+                        args = NULL;
+                    }
+                    func_args = func_args->cross_nxt;
+                }
+            }
+
+            if (!applicable) {
+                semantic_error(9, cur->child[0]->lineno,
+                               "Function not applicable for arguments");
+            } else {
+                return type_func->type->u.function.ret;
+            }
         }
     }
     // LP Exp RP
