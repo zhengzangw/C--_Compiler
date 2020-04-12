@@ -79,7 +79,17 @@ int equal_type(Type_ptr type_1, Type_ptr type_2) {
 
     return 0;
 }
-int equal_func() { return 1; }
+int equal_func(Type_ptr func_1, Type_ptr func_2) {
+    Symbol_ptr arg_1 = func_1->u.function.params;
+    Symbol_ptr arg_2 = func_2->u.function.params;
+    while (arg_1 && arg_2) {
+        if (!equal_type(arg_1->type, arg_2->type)) return 0;
+		arg_1 = arg_1->cross_nxt;
+		arg_2 = arg_2->cross_nxt;
+    }
+	if (arg_1 || arg_2) return 0;
+    return 1;
+}
 
 /*** High-Level Definitions ***/
 
@@ -88,8 +98,8 @@ void Program(AST_node* cur) {
     if (astcmp(0, ExtDefList)) {
         ExtDefList(cur->child[0]);
     }
-	// Error[18]
-	claim_check();
+    // Error[18]
+    claim_check();
 }
 
 void ExtDefList(AST_node* cur) {
@@ -115,7 +125,6 @@ void ExtDef(AST_node* cur) {
         region_func = NULL;
     }
     // ExtDef -> Specifier FunDec SEMI
-    // TODO Error[19]
     else if (astcmp(1, FunDec) && astcmp(2, SEMI)) {
         Type_ptr type = Specifier(cur->child[0]);
         FunDec(cur->child[1], type, true);
@@ -207,15 +216,6 @@ Symbol_ptr FunDec(AST_node* cur, Type_ptr specifier_type, int is_claim) {
     tmp->type->kind = FUNCTION;
     tmp->type->u.function.ret = specifier_type;
     tmp->type->u.function.is_claim = is_claim;
-    // Error[4]
-    if (hash_insert(tmp)) {
-        Symbol_ptr already_func = hash_find(tmp->name, SEARCH_FUNCTION);
-        if (already_func->type->u.function.is_claim) {
-            already_func->type->u.function.is_claim = 0;
-        }
-        semantic_error_option(4, cur->child[0]->lineno, "Redefined function",
-                              tmp->name);
-    }
     // FunDec -> ID LP RP
     if (cur->child_num == 3) {
         tmp->type->u.function.params_num = 0;
@@ -231,10 +231,26 @@ Symbol_ptr FunDec(AST_node* cur, Type_ptr specifier_type, int is_claim) {
         }
         region_depth -= 1;
     }
-    if (is_claim) {
-        tmp->type->u.function.claim_lineno = cur->child[0]->lineno;
-        claim_insert(tmp);
+    // Error[4], Error[19]
+    Symbol_ptr already_func = hash_find(tmp->name, SEARCH_FUNCTION);
+    if (already_func == NULL) {
+        if (hash_insert(tmp)) {
+            semantic_error_option(4, cur->child[0]->lineno,
+                                  "Redefined function", tmp->name);
+        }
+        if (is_claim) {
+            tmp->type->u.function.claim_lineno = cur->child[0]->lineno;
+            claim_insert(tmp);
+        }
+    } else if (already_func->type->u.function.is_claim) {
+        if (!equal_func(already_func->type, tmp->type)) {
+            semantic_error(19, cur->child[0]->lineno,
+                           "Function claim and defintion conflict");
+        } else {
+            if (!is_claim) already_func->type->u.function.is_claim = 0;
+        }
     }
+
     return tmp;
 }
 

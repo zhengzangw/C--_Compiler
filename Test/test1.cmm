@@ -1,6 +1,6 @@
 int a;
-int main();
-int test();
+int main(int a);
+int test(int a);
 struct a {
 	int a1 = 1;
 	int a1;
