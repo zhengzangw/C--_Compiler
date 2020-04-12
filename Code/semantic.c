@@ -432,7 +432,6 @@ Type_ptr Exp(AST_node* cur) {
     }
     // Exp LB Exp RB
     else if (astcmp(1, LB)) {
-        // TODO Error[12]
         Type_ptr type_array = Exp(cur->child[0]);
         // Error[10]
         if (type_array->kind != ARRAY) {
@@ -440,6 +439,11 @@ Type_ptr Exp(AST_node* cur) {
             return &UNKNOWN_TYPE;
         }
         Type_ptr type_int = Exp(cur->child[2]);
+        // Error[12]
+        if (type_int->kind != BASIC || type_int->u.basic != INT) {
+            semantic_error(12, cur->child[0]->lineno, "Not an integar");
+            return &UNKNOWN_TYPE;
+        }
         return type_array->u.array.elem;
     }
     // Exp DOT ID

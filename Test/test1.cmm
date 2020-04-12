@@ -9,5 +9,6 @@ int main(){
 	b[1] = 2;
 	b = b();
 	b = bb();
+	a[2.3] = 1.0;
 	return 1.0;
 }
