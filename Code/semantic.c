@@ -165,8 +165,11 @@ Type_ptr StructSpecifier(AST_node* cur) {
             prototype->name = cur->child[1]->child[0]->val;
             prototype->is_proto = 1;
             prototype->type = type;
-            // TODO Error[16]
-            hash_insert(prototype);
+            // Error[16]
+            if (hash_insert(prototype)) {
+                semantic_error_option(16, cur->child[1]->lineno,
+                                      "Duplicated name", prototype->name);
+            }
         }
         return type;
     }
