@@ -341,12 +341,20 @@ void Stmt(AST_node* cur) {
     // Stmt -> WHILE LP Exp RP Stmt
     // Stmt -> IF LP Exp RP Stmt
     else if (cur->child_num == 5) {
-        Exp(cur->child[2]);
+        Type_ptr type_tmp = Exp(cur->child[2]);
+        if (type_tmp->kind != BASIC) {
+            semantic_error(7, cur->child[1]->lineno,
+                           "Type mismatched for operands");
+        }
         Stmt(cur->child[4]);
     }
     // Stmt -> IF LP Exp RP Stmt ELSE Stmt
     else if (cur->child_num == 7) {
-        Exp(cur->child[2]);
+        Type_ptr type_tmp = Exp(cur->child[2]);
+        if (type_tmp->kind != BASIC) {
+            semantic_error(7, cur->child[1]->lineno,
+                           "Type mismatched for operands");
+        }
         Stmt(cur->child[4]);
         Stmt(cur->child[6]);
     }
@@ -367,10 +375,11 @@ Type_ptr Exp(AST_node* cur) {
         if (!hash_find(cur->child[0]->val, SEARCH_FUNCTION)) {
             semantic_error_option(2, cur->child[0]->lineno,
                                   "Undefined function", cur->child[0]->val);
-            return &UNKNOWN_TYPE;
+        } else {
+            Symbol_ptr type_func =
+                hash_find(cur->child[0]->val, SEARCH_FUNCTION);
+            return type_func->type->u.function.ret;
         }
-        Symbol_ptr type_func = hash_find(cur->child[0]->val, SEARCH_FUNCTION);
-        return type_func->type->u.function.ret;
     }
     // LP Exp RP
     else if (astcmp(0, LP)) {
@@ -424,11 +433,33 @@ Type_ptr Exp(AST_node* cur) {
     // Exp STAR Exp
     // Exp DIV Exp
     else if (cur->child_num == 3) {
-        // TODO Error[7]
+        // Error[7]
         Type_ptr type_1 = Exp(cur->child[0]);
         Type_ptr type_2 = Exp(cur->child[2]);
-        if (equal_type(type_1, type_2)) {
+        if (strcmp(cur->child[1]->name, "AND") == 0 ||
+            strcmp(cur->child[1]->name, "OR") == 0 ||
+            strcmp(cur->child[1]->name, "RELOP") == 0) {
+            if ((type_1->kind != BASIC || type_1->u.basic != INT) ||
+                (type_2->kind != BASIC || type_2->u.basic != INT)) {
+                semantic_error(7, cur->child[1]->lineno,
+                               "Type mismatched for operands");
+                return &UNKNOWN_TYPE;
+            }
+        } else {
+            if (type_1->kind != BASIC || type_2->kind != BASIC) {
+                semantic_error(7, cur->child[1]->lineno,
+                               "Type mismatched for operands");
+                return &UNKNOWN_TYPE;
+            }
+        }
+        if (type_1->kind != BASIC || type_2->kind != BASIC) {
+            semantic_error(7, cur->child[1]->lineno,
+                           "Type mismatched for operands");
+        } else if (equal_type(type_1, type_2)) {
             return type_2;
+        } else {
+            semantic_error(7, cur->child[1]->lineno,
+                           "Type mismatched for operands");
         }
     }
     // MINUS Exp
@@ -443,9 +474,9 @@ Type_ptr Exp(AST_node* cur) {
         if (!target) {
             semantic_error_option(1, cur->child[0]->lineno,
                                   "Undefined variable", cur->child[0]->val);
-            return &UNKNOWN_TYPE;
+        } else {
+            return target->type;
         }
-        return target->type;
     }
     // INT
     else if (astcmp(0, INT)) {
@@ -455,7 +486,7 @@ Type_ptr Exp(AST_node* cur) {
     else if (astcmp(0, FLOAT)) {
         return &FLOAT_TYPE;
     }
-    return NULL;
+    return &UNKNOWN_TYPE;
 }
 
 /*--------------------------------------------------------------------
