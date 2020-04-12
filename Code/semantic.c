@@ -448,8 +448,13 @@ Type_ptr Exp(AST_node* cur) {
     }
     // Exp DOT ID
     else if (astcmp(1, DOT)) {
-        // TODO Error[13], Error[14]
+        // TODO Error[14]
         Type_ptr type_strcut = Exp(cur->child[0]);
+		// Error[13]
+		if (type_strcut->kind != STRUCTURE){
+			semantic_error(13, cur->child[0]->lineno, "Not a structure");
+			return &UNKNOWN_TYPE;
+		}
         for (Symbol_ptr p = type_strcut->u.structure; p; p = p->cross_nxt) {
             if (strcmp(p->name, cur->child[2]->name) == 0) {
                 return p->type;
