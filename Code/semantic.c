@@ -61,15 +61,18 @@ int equal_type(Type_ptr type_1, Type_ptr type_2) {
                 return equal_type(t1, t2);
             }
             case STRUCTURE: {
+				if (type_nofunc_1 == type_nofunc_2) return 1;
                 int ret = 1;
-                for (Symbol_ptr p1 = type_nofunc_1->u.structure,
-                                p2 = type_nofunc_2->u.structure;
+                Symbol_ptr p1, p2;
+                for (p1 = type_nofunc_1->u.structure,
+                    p2 = type_nofunc_2->u.structure;
                      p1 && p2; p1 = p1->cross_nxt, p2 = p2->cross_nxt) {
                     if (!equal_type(p1->type, p2->type)) {
                         ret = 0;
                         break;
                     }
                 }
+                if (p1 || p2) ret = 0;
                 return ret;
             }
             default:
@@ -80,20 +83,22 @@ int equal_type(Type_ptr type_1, Type_ptr type_2) {
     return 0;
 }
 int equal_func(Type_ptr func_1, Type_ptr func_2) {
+    if (!equal_type(func_1->u.function.ret, func_2->u.function.ret)) return 0;
     Symbol_ptr arg_1 = func_1->u.function.params;
     Symbol_ptr arg_2 = func_2->u.function.params;
     while (arg_1 && arg_2) {
         if (!equal_type(arg_1->type, arg_2->type)) return 0;
-		arg_1 = arg_1->cross_nxt;
-		arg_2 = arg_2->cross_nxt;
+        arg_1 = arg_1->cross_nxt;
+        arg_2 = arg_2->cross_nxt;
     }
-	if (arg_1 || arg_2) return 0;
+    if (arg_1 || arg_2) return 0;
     return 1;
 }
 
 /*** High-Level Definitions ***/
 
 void Program(AST_node* cur) {
+    hash_create();
     // Program -> ExtDefList
     if (astcmp(0, ExtDefList)) {
         ExtDefList(cur->child[0]);
@@ -233,7 +238,7 @@ Symbol_ptr FunDec(AST_node* cur, Type_ptr specifier_type, int is_claim) {
     }
     // Error[4], Error[19]
     Symbol_ptr already_func = hash_find(tmp->name, SEARCH_FUNCTION);
-    if (already_func == NULL) {
+    if (already_func == NULL || !already_func->type->u.function.is_claim) {
         if (hash_insert(tmp)) {
             semantic_error_option(4, cur->child[0]->lineno,
                                   "Redefined function", tmp->name);
@@ -242,13 +247,12 @@ Symbol_ptr FunDec(AST_node* cur, Type_ptr specifier_type, int is_claim) {
             tmp->type->u.function.claim_lineno = cur->child[0]->lineno;
             claim_insert(tmp);
         }
-    } else if (already_func->type->u.function.is_claim) {
+    } else {
         if (!equal_func(already_func->type, tmp->type)) {
             semantic_error(19, cur->child[0]->lineno,
                            "Function claim and defintion conflict");
-        } else {
-            if (!is_claim) already_func->type->u.function.is_claim = 0;
         }
+        if (!is_claim) already_func->type->u.function.is_claim = 0;
     }
 
     return tmp;
@@ -333,16 +337,6 @@ Symbol_ptr Def(AST_node* cur) {
 Symbol_ptr DecList(AST_node* cur, Type_ptr specifier_type) {
     // DecList -> Dec
     Symbol_ptr tmp = Dec(cur->child[0], specifier_type);
-    // Error[3], Error[15]
-    if (hash_insert(tmp)) {
-        if (region_in_structure) {
-            semantic_error_option(15, cur->child[0]->lineno, "Redefined field",
-                                  tmp->name);
-        } else {
-            semantic_error_option(3, cur->child[0]->lineno,
-                                  "Redefined variable", tmp->name);
-        }
-    }
     // DecList -> Dec COMMA DecList
     if (cur->child_num == 3) {
         tmp->cross_nxt = DecList(cur->child[2], specifier_type);
@@ -356,6 +350,16 @@ Symbol_ptr DecList(AST_node* cur, Type_ptr specifier_type) {
 Symbol_ptr Dec(AST_node* cur, Type_ptr specifier_type) {
     // Dec -> VarDec
     Symbol_ptr tmp = VarDec(cur->child[0], specifier_type);
+    // Error[3], Error[15]
+    if (hash_insert(tmp)) {
+        if (region_in_structure) {
+            semantic_error_option(15, cur->child[0]->lineno, "Redefined field",
+                                  tmp->name);
+        } else {
+            semantic_error_option(3, cur->child[0]->lineno,
+                                  "Redefined variable", tmp->name);
+        }
+    }
     // Dec -> VarDec ASSIGNOP Exp
     if (cur->child_num == 3) {
         Type_ptr type_exp = Exp(cur->child[2]);
@@ -446,7 +450,7 @@ Type_ptr Exp(AST_node* cur) {
         // Error[2], Error[11]
         if (!hash_find(cur->child[0]->val, SEARCH_FUNCTION)) {
             if (hash_find(cur->child[0]->val, SEARCH_VARIABLE)) {
-                semantic_error_option(2, cur->child[0]->lineno,
+                semantic_error_option(11, cur->child[0]->lineno,
                                       "Not a function", cur->child[0]->val);
             } else {
                 semantic_error_option(2, cur->child[0]->lineno,
@@ -507,7 +511,6 @@ Type_ptr Exp(AST_node* cur) {
         // Error[12]
         if (type_int->kind != BASIC || type_int->u.basic != INT) {
             semantic_error(12, cur->child[0]->lineno, "Not an integar");
-            return &UNKNOWN_TYPE;
         }
         return type_array->u.array.elem;
     }
@@ -521,7 +524,7 @@ Type_ptr Exp(AST_node* cur) {
         }
         Type_ptr ret = NULL;
         for (Symbol_ptr p = type_strcut->u.structure; p; p = p->cross_nxt) {
-            if (strcmp(p->name, cur->child[2]->name) == 0) {
+            if (strcmp(p->name, cur->child[2]->val) == 0) {
                 ret = p->type;
                 break;
             }

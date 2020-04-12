@@ -1,10 +1,17 @@
-int a;
-int main(int a);
-int test(int a);
-struct a {
-	int a1 = 1;
-	int a1;
-};
+struct Soldier{
+  int name;
+  int power;
+}platoon[10];
+
+struct General{
+  int names;
+  struct Soldier soldiers[10];
+}McMiller;
+
+
 int main(){
-	struct a aa;
+  struct McMiller{
+    struct General man;
+  }one;
+  return 0;
 }

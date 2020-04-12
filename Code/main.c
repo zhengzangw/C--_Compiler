@@ -16,6 +16,8 @@
 #include "semantic.h"
 #include "symbol.h"
 
+#define Lab2
+
 int main(int argc, char** argv) {
     if (argc <= 1) return 1;
     FILE* f = fopen(argv[1], "r");
@@ -30,12 +32,13 @@ int main(int argc, char** argv) {
     yyparse();
 
     if (error_num == 0) {
-        // Lab 1
-        // ast_print(ast_root, 0);
-        // Lab 2
-        hash_create();
-        Program(ast_root);
-        //_hash_print_all_symbols();
+        #ifdef Lab1
+        	ast_print(ast_root, 0);
+		#endif
+        #ifdef Lab2
+        	Program(ast_root);
+			// _hash_print_all_symbols();
+		#endif
     } else {
         print_error();
     }

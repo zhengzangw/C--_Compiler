@@ -41,7 +41,7 @@ syntax-c: $(YFILE)
 test: parser
 	./parser ./Test/test1.cmm
 testall:
-	$(CI) ./parser
+	$(CI) ./parser -l 2
 clean:
 	rm -f $(SRC)/parser $(SRC)/lex.yy.c $(SRC)/syntax.tab.c $(SRC)/syntax.tab.h $(SRC)/syntax.output
 	rm -f $(OBJS) $(OBJS:.o=.d)

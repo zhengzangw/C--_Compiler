@@ -39,7 +39,7 @@ void compst_insert(Symbol_ptr cur) {
 
 void compst_destroy(int depth) {
     for (Symbol_ptr p = compst[depth]; p; p = p->compst_nxt) {
-        p->is_activate = 0;
+        if (!p->is_proto) p->is_activate = 0;
     }
     compst[depth] = NULL;
 }
@@ -55,18 +55,16 @@ unsigned int hash_pjw(char* name) {
 }
 
 int hash_same(Symbol_ptr node_new, Symbol_ptr node_old) {
-    if (!node_old->is_activate) {
-        return 0;
-    }
-    if (strcmp(node_new->name, node_new->name) == 0 &&
-        node_new->region <= node_old->region) {
-			switch (node_new->type->kind){
-				case FUNCTION:
-					if (node_old->type->kind==FUNCTION) return 1;
-					break;
-				default:
-					if (node_old->type->kind!=FUNCTION) return 1;
-			}
+    int activate = (node_old->is_activate && node_new->region <= node_old->region) ||
+                   node_old->is_proto || node_new->is_proto;
+    if (activate && strcmp(node_new->name, node_old->name) == 0) {
+        switch (node_new->type->kind) {
+            case FUNCTION:
+                if (node_old->type->kind == FUNCTION) return 1;
+                break;
+            default:
+                if (node_old->type->kind != FUNCTION) return 1;
+        }
     }
     return 0;
 }
@@ -105,19 +103,21 @@ Symbol* hash_find(char* name, SEARCH_TYPE kind) {
     while (cur) {
         if (cur->is_activate && strcmp(name, cur->name) == 0) {
             if (!opt || opt->region < cur->region) {
-				switch (kind) {
-					case SEARCH_FUNCTION:
-						if (cur->type->kind == FUNCTION) opt = cur;
-						break;
-					case SEARCH_VARIABLE:
-						if (cur->type->kind != FUNCTION && !cur->is_proto) opt = cur;
-						break;
-					case SEARCH_PROTO:
-						if (cur->type->kind == STRUCTURE && cur->is_proto) opt = cur;
-						break;
-					case SEARCH_ALL:
-						opt = cur;
-				}
+                switch (kind) {
+                    case SEARCH_FUNCTION:
+                        if (cur->type->kind == FUNCTION) opt = cur;
+                        break;
+                    case SEARCH_VARIABLE:
+                        if (cur->type->kind != FUNCTION && !cur->is_proto)
+                            opt = cur;
+                        break;
+                    case SEARCH_PROTO:
+                        if (cur->type->kind == STRUCTURE && cur->is_proto)
+                            opt = cur;
+                        break;
+                    case SEARCH_ALL:
+                        opt = cur;
+                }
             }
         }
         cur = cur->nxt;

@@ -7,6 +7,8 @@
 /Code/lex.yy.c
 /Code/syntax.tab.*
 
+/Test/*.cmm
+
 parser
 *.zip
 compilers-tests/**
