@@ -448,18 +448,25 @@ Type_ptr Exp(AST_node* cur) {
     }
     // Exp DOT ID
     else if (astcmp(1, DOT)) {
-        // TODO Error[14]
         Type_ptr type_strcut = Exp(cur->child[0]);
 		// Error[13]
 		if (type_strcut->kind != STRUCTURE){
 			semantic_error(13, cur->child[0]->lineno, "Not a structure");
 			return &UNKNOWN_TYPE;
 		}
+		Type_ptr ret = NULL;
         for (Symbol_ptr p = type_strcut->u.structure; p; p = p->cross_nxt) {
             if (strcmp(p->name, cur->child[2]->name) == 0) {
-                return p->type;
+                ret = p->type;
+				break;
             }
         }
+		// Error[14]
+		if (!ret) {
+			semantic_error(14, cur->child[2]->lineno, "Illegal use of \".\"");
+			return &UNKNOWN_TYPE;
+		}
+		return ret;
     }
     // Exp ASSIGNOP Exp
     else if (astcmp(1, ASSIGNOP)) {
