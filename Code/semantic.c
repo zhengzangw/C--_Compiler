@@ -427,10 +427,15 @@ Type_ptr Exp(AST_node* cur) {
     }
     // Exp LB Exp RB
     else if (astcmp(1, LB)) {
-        // TODO Error[10], Error[12]
+        // TODO Error[12]
         Type_ptr type_array = Exp(cur->child[0]);
-        Type_ptr type_int = Exp(cur->child[2]);
-        return type_array->u.array.elem;
+        // Error[10]
+        if (type_array->kind != ARRAY) {
+            semantic_error(10, cur->child[0]->lineno, "Not an array");
+        } else {
+            Type_ptr type_int = Exp(cur->child[2]);
+            return type_array->u.array.elem;
+        }
     }
     // Exp DOT ID
     else if (astcmp(1, DOT)) {
