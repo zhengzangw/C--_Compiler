@@ -1,37 +1,6 @@
-//test1p
-int i;
-float oh(){}
-struct none {
-	int nothing;
-};
-struct s1 {
-	int a;
-	float b[10][20][30];
-	struct s1_1 {
-		struct none s1;
-		int cc[1];
-	} test;
-	struct none awsl;
-	int c,d;
-};
-struct why {};
-struct s2 {
-	int d;
-	float k[15][10][1];
-	struct s1_1 {
-		struct none cc;
-		int s1;
-	} test;
-	struct none nmsl;
-	int dp,p;
-} p2;
+int a[10];
+int f(){}
 int main(){
-	float i;
-	float j = i;
-	float a[3] = oh();
-	oh();
-}
-int main2(){
-	float j =i;
-	struct s1 p1 = p2;
+	a = 10;
+	f() = 10;
 }

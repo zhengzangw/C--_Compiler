@@ -33,8 +33,7 @@ int equal_type(Type_ptr type_1, Type_ptr type_2) {
         switch (type_nofunc_1->kind) {
             case BASIC:
                 return type_nofunc_1->u.basic == type_nofunc_2->u.basic;
-            case ARRAY:
-			{
+            case ARRAY: {
                 Type_ptr t1, t2;
                 for (t1 = type_nofunc_1->u.array.elem,
                     t2 = type_nofunc_2->u.array.elem;
@@ -42,26 +41,27 @@ int equal_type(Type_ptr type_1, Type_ptr type_2) {
                      t1 = t1->u.array.elem, t2 = t2->u.array.elem)
                     ;
                 return equal_type(t1, t2);
-			}
-			case STRUCTURE:
-			{
-				int ret = 1;
-				for (Symbol_ptr p1=type_nofunc_1->u.structure, p2=type_nofunc_2->u.structure;p1&&p2;p1=p1->cross_nxt, p2=p2->cross_nxt){
-					if (!equal_type(p1->type, p2->type)){
-						ret = 0;
-						break;
-					}
-				}
-				return ret;
-			}
-			default:
-				return -1;
+            }
+            case STRUCTURE: {
+                int ret = 1;
+                for (Symbol_ptr p1 = type_nofunc_1->u.structure,
+                                p2 = type_nofunc_2->u.structure;
+                     p1 && p2; p1 = p1->cross_nxt, p2 = p2->cross_nxt) {
+                    if (!equal_type(p1->type, p2->type)) {
+                        ret = 0;
+                        break;
+                    }
+                }
+                return ret;
+            }
+            default:
+                return -1;
         }
     }
 
     return 0;
 }
-int equal_func() {return 1;}
+int equal_func() { return 1; }
 
 /*** High-Level Definitions ***/
 
@@ -101,7 +101,7 @@ void ExtDef(AST_node* cur) {
     }
     // ExtDef -> Specifier SEMI
     else {
-		Specifier(cur->child[0]);
+        Specifier(cur->child[0]);
     }
 }
 
@@ -141,7 +141,8 @@ Type_ptr StructSpecifier(AST_node* cur) {
     // StructSpecifier -> STRUCT Tag
     if (cur->child_num == 2) {
         // TODO Error[17]
-        Symbol_ptr struct_tmp = hash_find(cur->child[1]->child[0]->val, SEARCH_PROTO);
+        Symbol_ptr struct_tmp =
+            hash_find(cur->child[1]->child[0]->val, SEARCH_PROTO);
         return struct_tmp->type;
     }
     // StructSpecifier -> STRUCT OptTag LC DefList RC
@@ -295,10 +296,11 @@ Symbol_ptr Dec(AST_node* cur, Type_ptr specifier_type) {
     // Dec -> VarDec ASSIGNOP Exp
     if (cur->child_num == 3) {
         Type_ptr type_exp = Exp(cur->child[2]);
-		// Error[5]
-		if (!equal_type(type_exp, tmp->type)){
-			semantic_error(5, cur->child[1]->lineno, "Type mismatched for assignment");
-		}
+        // Error[5]
+        if (!equal_type(type_exp, tmp->type)) {
+            semantic_error(5, cur->child[1]->lineno,
+                           "Type mismatched for assignment");
+        }
     }
     return tmp;
 }
@@ -393,14 +395,26 @@ Type_ptr Exp(AST_node* cur) {
     }
     // Exp ASSIGNOP Exp
     else if (astcmp(1, ASSIGNOP)) {
-        // TODO Error[5], Error[6]
+        // Error[6]
         Type_ptr type_1 = Exp(cur->child[0]);
+        if (!((cur->child[0]->child_num == 1 &&
+               strcmp(cur->child[0]->child[0]->name, "ID") == 0) ||
+              (cur->child[0]->child_num == 3 &&
+               strcmp(cur->child[0]->child[1]->name, "DOT") == 0) ||
+              (cur->child[0]->child_num == 4 &&
+               strcmp(cur->child[0]->child[1]->name, "LB") == 0))) {
+            semantic_error(
+                6, cur->child[1]->lineno,
+                "The left-hand side of an assignment must be a variable");
+        }
         Type_ptr type_2 = Exp(cur->child[2]);
+        // Error[5]
         if (equal_type(type_1, type_2)) {
             return type_2;
         } else {
-			semantic_error(5, cur->child[1]->lineno, "Type mismatched for assignment");
-		}
+            semantic_error(5, cur->child[1]->lineno,
+                           "Type mismatched for assignment");
+        }
     }
     // Exp AND Exp
     // Exp OR Exp
