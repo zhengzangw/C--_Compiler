@@ -23,6 +23,8 @@
 
 int region_depth = 0;
 Symbol_ptr region_func = NULL;
+int region_in_structure = 0;
+
 int equal_type(Type_ptr type_1, Type_ptr type_2) {
     if (type_1->kind == BASIC && type_1->u.basic == UNKNOWN) return 1;
     if (type_2->kind == BASIC && type_2->u.basic == UNKNOWN) return 1;
@@ -149,11 +151,13 @@ Type_ptr StructSpecifier(AST_node* cur) {
     }
     // StructSpecifier -> STRUCT OptTag LC DefList RC
     else {
-        // TODO Error[15]
         Type_ptr type = (Type_ptr)malloc(sizeof(Type));
         type->kind = STRUCTURE;
         region_depth += 1;
+        // Error[15]
+        region_in_structure = 1;
         if (cur->child[3]) type->u.structure = DefList(cur->child[3]);
+        region_in_structure = 0;
         compst_destroy(region_depth);
         region_depth -= 1;
         if (cur->child[1]) {
@@ -278,10 +282,15 @@ Symbol_ptr Def(AST_node* cur) {
 Symbol_ptr DecList(AST_node* cur, Type_ptr specifier_type) {
     // DecList -> Dec
     Symbol_ptr tmp = Dec(cur->child[0], specifier_type);
-    // Error[3]
+    // Error[3], Error[15]
     if (hash_insert(tmp)) {
-        semantic_error_option(3, cur->child[0]->lineno, "Redefined variable",
-                              tmp->name);
+        if (region_in_structure) {
+            semantic_error_option(15, cur->child[0]->lineno, "Redefined field",
+                                  tmp->name);
+        } else {
+            semantic_error_option(3, cur->child[0]->lineno,
+                                  "Redefined variable", tmp->name);
+        }
     }
     // DecList -> Dec COMMA DecList
     if (cur->child_num == 3) {
@@ -299,8 +308,13 @@ Symbol_ptr Dec(AST_node* cur, Type_ptr specifier_type) {
     // Dec -> VarDec ASSIGNOP Exp
     if (cur->child_num == 3) {
         Type_ptr type_exp = Exp(cur->child[2]);
+        // Error[15]
+        if (region_in_structure) {
+            semantic_error(15, cur->child[1]->lineno,
+                           "Assignment in structure definition");
+        }
         // Error[5]
-        if (!equal_type(type_exp, tmp->type)) {
+        else if (!equal_type(type_exp, tmp->type)) {
             semantic_error(5, cur->child[1]->lineno,
                            "Type mismatched for assignment");
         }
@@ -449,24 +463,24 @@ Type_ptr Exp(AST_node* cur) {
     // Exp DOT ID
     else if (astcmp(1, DOT)) {
         Type_ptr type_strcut = Exp(cur->child[0]);
-		// Error[13]
-		if (type_strcut->kind != STRUCTURE){
-			semantic_error(13, cur->child[0]->lineno, "Not a structure");
-			return &UNKNOWN_TYPE;
-		}
-		Type_ptr ret = NULL;
+        // Error[13]
+        if (type_strcut->kind != STRUCTURE) {
+            semantic_error(13, cur->child[0]->lineno, "Not a structure");
+            return &UNKNOWN_TYPE;
+        }
+        Type_ptr ret = NULL;
         for (Symbol_ptr p = type_strcut->u.structure; p; p = p->cross_nxt) {
             if (strcmp(p->name, cur->child[2]->name) == 0) {
                 ret = p->type;
-				break;
+                break;
             }
         }
-		// Error[14]
-		if (!ret) {
-			semantic_error(14, cur->child[2]->lineno, "Illegal use of \".\"");
-			return &UNKNOWN_TYPE;
-		}
-		return ret;
+        // Error[14]
+        if (!ret) {
+            semantic_error(14, cur->child[2]->lineno, "Illegal use of \".\"");
+            return &UNKNOWN_TYPE;
+        }
+        return ret;
     }
     // Exp ASSIGNOP Exp
     else if (astcmp(1, ASSIGNOP)) {
