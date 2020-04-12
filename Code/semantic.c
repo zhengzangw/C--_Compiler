@@ -22,6 +22,7 @@
     printf("Error type %d at Line %d: %s \"%s\".\n", type, lineno, desc, letter)
 
 int region_depth = 0;
+Symbol_ptr region_func = NULL;
 int equal_type(Type_ptr type_1, Type_ptr type_2) {
     if (type_1->kind == BASIC && type_1->u.basic == UNKNOWN) return 1;
     if (type_2->kind == BASIC && type_2->u.basic == UNKNOWN) return 1;
@@ -90,8 +91,9 @@ void ExtDef(AST_node* cur) {
     // ExtDef -> Specifier FunDec CompSt
     else if (astcmp(1, FunDec) && astcmp(2, CompSt)) {
         Type_ptr type = Specifier(cur->child[0]);
-        FunDec(cur->child[1], type, false);
+        region_func = FunDec(cur->child[1], type, false);
         CompSt(cur->child[2]);
+		region_func = NULL;
     }
     // ExtDef -> Specifier FunDec SEMI
     // TODO Error[18], Error[19]
@@ -168,7 +170,7 @@ Type_ptr StructSpecifier(AST_node* cur) {
 
 /*** Declarators ***/
 
-void FunDec(AST_node* cur, Type_ptr specifier_type, int is_dec) {
+Symbol_ptr FunDec(AST_node* cur, Type_ptr specifier_type, int is_dec) {
     Symbol_ptr tmp = new_symbol(region_depth);
     tmp->name = cur->child[0]->val;
     tmp->type = (Type_ptr)malloc(sizeof(Type));
@@ -194,6 +196,7 @@ void FunDec(AST_node* cur, Type_ptr specifier_type, int is_dec) {
         }
         region_depth -= 1;
     }
+	return tmp;
 }
 
 Symbol_ptr VarList(AST_node* cur, Symbol_ptr func) {
@@ -335,8 +338,11 @@ void Stmt(AST_node* cur) {
     }
     // Stmt -> RETURN Exp SEMI
     else if (astcmp(0, RETURN)) {
-        // TODO Error[8]
-        Exp(cur->child[1]);
+        // Error[8]
+        Type_ptr type_ret = Exp(cur->child[1]);
+		if (!equal_type(type_ret, region_func->type)){
+			semantic_error(8, cur->child[0]->lineno, "Type mismatched for return");
+		}
     }
     // Stmt -> WHILE LP Exp RP Stmt
     // Stmt -> IF LP Exp RP Stmt

@@ -31,7 +31,7 @@ Type_ptr StructSpecifier(AST_node* cur);
 
 /*** Declarators ***/
 
-void FunDec(AST_node* cur, Type_ptr specifier_type, int);
+Symbol_ptr FunDec(AST_node* cur, Type_ptr specifier_type, int);
 
 Symbol_ptr VarList(AST_node* cur, Symbol_ptr func);
 
