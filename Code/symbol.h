@@ -12,6 +12,7 @@
 
 #define SYMBOL_SIZE 32767
 #define COMPST_SIZE 255
+#define CLAIM_SIZE 255
 
 typedef enum _BASIC_TYPE { UNKNOWN, INT, FLOAT } BASIC_TYPE;
 typedef enum _KIND { BASIC, ARRAY, STRUCTURE, FUNCTION } KIND;
@@ -38,6 +39,7 @@ typedef struct _Type {
             Type_ptr ret;
             int params_num;
             Symbol_ptr params;
+			int is_claim, claim_lineno;
         } function;
     } u;
 } Type;
@@ -57,14 +59,11 @@ typedef struct _Symbol {
 } Symbol;
 
 Symbol_ptr new_symbol(int region);
-
-extern Symbol* hash_table[SYMBOL_SIZE];
-
+// Hash
 void hash_create();
 int hash_insert(Symbol_ptr node);
 Symbol* hash_find(char* name, SEARCH_TYPE kind);
-
-extern Symbol* compst[COMPST_SIZE];
+// Compst
 void compst_destroy(int depth);
 
 void _hash_print_all_symbols();

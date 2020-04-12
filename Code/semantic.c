@@ -24,6 +24,21 @@
 int region_depth = 0;
 Symbol_ptr region_func = NULL;
 int region_in_structure = 0;
+Symbol_ptr claim_list[CLAIM_SIZE];
+int total_claim = 0;
+
+int claim_insert(Symbol_ptr func_node) {
+    claim_list[total_claim++] = func_node;
+    return 0;
+}
+void claim_check() {
+    for (int i = 0; i < total_claim; ++i) {
+        if (claim_list[i]->type->u.function.is_claim) {
+            semantic_error(18, claim_list[i]->type->u.function.claim_lineno,
+                           "Function claimed but not defined");
+        }
+    }
+}
 
 int equal_type(Type_ptr type_1, Type_ptr type_2) {
     if (type_1->kind == BASIC && type_1->u.basic == UNKNOWN) return 1;
@@ -73,6 +88,8 @@ void Program(AST_node* cur) {
     if (astcmp(0, ExtDefList)) {
         ExtDefList(cur->child[0]);
     }
+	// Error[18]
+	claim_check();
 }
 
 void ExtDefList(AST_node* cur) {
@@ -98,7 +115,7 @@ void ExtDef(AST_node* cur) {
         region_func = NULL;
     }
     // ExtDef -> Specifier FunDec SEMI
-    // TODO Error[18], Error[19]
+    // TODO Error[19]
     else if (astcmp(1, FunDec) && astcmp(2, SEMI)) {
         Type_ptr type = Specifier(cur->child[0]);
         FunDec(cur->child[1], type, true);
@@ -144,9 +161,15 @@ Type_ptr Specifier(AST_node* cur) {
 Type_ptr StructSpecifier(AST_node* cur) {
     // StructSpecifier -> STRUCT Tag
     if (cur->child_num == 2) {
-        // TODO Error[17]
+        // Error[17]
         Symbol_ptr struct_tmp =
             hash_find(cur->child[1]->child[0]->val, SEARCH_PROTO);
+        if (!struct_tmp) {
+            semantic_error_option(17, cur->child[1]->lineno,
+                                  "Undefined structure",
+                                  cur->child[1]->child[0]->val);
+            return &UNKNOWN_TYPE;
+        }
         return struct_tmp->type;
     }
     // StructSpecifier -> STRUCT OptTag LC DefList RC
@@ -177,14 +200,19 @@ Type_ptr StructSpecifier(AST_node* cur) {
 
 /*** Declarators ***/
 
-Symbol_ptr FunDec(AST_node* cur, Type_ptr specifier_type, int is_dec) {
+Symbol_ptr FunDec(AST_node* cur, Type_ptr specifier_type, int is_claim) {
     Symbol_ptr tmp = new_symbol(region_depth);
     tmp->name = cur->child[0]->val;
     tmp->type = (Type_ptr)malloc(sizeof(Type));
     tmp->type->kind = FUNCTION;
     tmp->type->u.function.ret = specifier_type;
+    tmp->type->u.function.is_claim = is_claim;
     // Error[4]
     if (hash_insert(tmp)) {
+        Symbol_ptr already_func = hash_find(tmp->name, SEARCH_FUNCTION);
+        if (already_func->type->u.function.is_claim) {
+            already_func->type->u.function.is_claim = 0;
+        }
         semantic_error_option(4, cur->child[0]->lineno, "Redefined function",
                               tmp->name);
     }
@@ -198,10 +226,14 @@ Symbol_ptr FunDec(AST_node* cur, Type_ptr specifier_type, int is_dec) {
         tmp->type->u.function.params_num = 0;
         region_depth += 1;
         tmp->type->u.function.params = VarList(cur->child[2], tmp);
-        if (is_dec) {
+        if (is_claim) {
             compst_destroy(region_depth);
         }
         region_depth -= 1;
+    }
+    if (is_claim) {
+        tmp->type->u.function.claim_lineno = cur->child[0]->lineno;
+        claim_insert(tmp);
     }
     return tmp;
 }
