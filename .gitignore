@@ -14,3 +14,4 @@ parser
 compilers-tests/**
 .DS_Store
 .vscode
+.devcontainer
