@@ -24,6 +24,9 @@ int ast_append(AST_node* cur, int child_num, ...);
 void ast_print(AST_node* root, int depth);
 extern AST_node* ast_root;
 
+#define astcmp(i, str) \
+    (cur->child_num > (i) && strcmp(cur->child[i]->name, #str) == 0)
+
 #endif
 
 /*--------------------------------------------------------------------
