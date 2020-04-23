@@ -14,8 +14,6 @@
 
 #include "common.h"
 
-#define astcmp(i, str) \
-    (cur->child_num > (i) && strcmp(cur->child[i]->name, #str) == 0)
 #define semantic_error(type, lineno, desc) \
     printf("Error type %d at Line %d: %s.\n", type, lineno, desc)
 #define semantic_error_option(type, lineno, desc, letter) \
@@ -61,7 +59,7 @@ int equal_type(Type_ptr type_1, Type_ptr type_2) {
                 return equal_type(t1, t2);
             }
             case STRUCTURE: {
-				if (type_nofunc_1 == type_nofunc_2) return 1;
+                if (type_nofunc_1 == type_nofunc_2) return 1;
                 int ret = 1;
                 Symbol_ptr p1, p2;
                 for (p1 = type_nofunc_1->u.structure,
@@ -99,6 +97,7 @@ int equal_func(Type_ptr func_1, Type_ptr func_2) {
 
 void Program(AST_node* cur) {
     hash_create();
+	initIO();
     // Program -> ExtDefList
     if (astcmp(0, ExtDefList)) {
         ExtDefList(cur->child[0]);
@@ -624,6 +623,33 @@ Type_ptr Exp(AST_node* cur) {
         return &FLOAT_TYPE;
     }
     return &UNKNOWN_TYPE;
+}
+
+/*** System Function ***/
+void initIO() {
+    // int read();
+    Symbol_ptr read_op = new_symbol(0);
+    read_op->name = "read";
+    read_op->type = (Type_ptr)malloc(sizeof(Type));
+    read_op->type->kind = FUNCTION;
+    read_op->type->u.function.ret = &INT_TYPE;
+    read_op->type->u.function.is_claim = false;
+    read_op->type->u.function.params_num = 0;
+    read_op->type->u.function.params = NULL;
+    hash_insert(read_op);
+    // int write(int);
+    Symbol_ptr write_op = new_symbol(0);
+    write_op->name = "write";
+    write_op->type = (Type_ptr)malloc(sizeof(Type));
+    write_op->type->kind = FUNCTION;
+    write_op->type->u.function.ret = &INT_TYPE;
+    write_op->type->u.function.is_claim = false;
+    write_op->type->u.function.params_num = 1;
+    Symbol_ptr write_param = new_symbol(0);
+	write_param->name = "#output_int";
+    write_param->type = &INT_TYPE;
+    write_op->type->u.function.params = write_param;
+    hash_insert(write_op);
 }
 
 /*--------------------------------------------------------------------

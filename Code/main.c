@@ -4,9 +4,6 @@
  * File Created: 2020-03-29
  * Author: Zangwei Zheng (zzw@smail.nju.edu.cn)
  * -----
- * Last Modified: 2020-03-29
- * Modified By: Zangwei Zheng (zzw@smail.nju.edu.cn)
- * -----
  * Copyright 2020 NJU, Zangwei Zheng
  */
 
@@ -15,8 +12,9 @@
 #include "error.h"
 #include "semantic.h"
 #include "symbol.h"
+#include "translate.h"
 
-#define Lab2
+#define Lab3
 
 int main(int argc, char** argv) {
     if (argc <= 1) return 1;
@@ -32,13 +30,17 @@ int main(int argc, char** argv) {
     yyparse();
 
     if (error_num == 0) {
-        #ifdef Lab1
-        	ast_print(ast_root, 0);
-		#endif
-        #ifdef Lab2
-        	Program(ast_root);
-			// _hash_print_all_symbols();
-		#endif
+#ifdef Lab1
+        ast_print(ast_root, 0);
+#endif
+#ifdef Lab2
+        Program(ast_root);
+        // _hash_print_all_symbols();
+#endif
+#ifdef Lab3
+        Program(ast_root);
+        translate_Program(ast_root);
+#endif
     } else {
         print_error();
     }
