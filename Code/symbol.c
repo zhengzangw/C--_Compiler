@@ -9,9 +9,6 @@
 
 #include "symbol.h"
 
-#include <stdlib.h>
-#include <string.h>
-
 #include "common.h"
 
 Symbol_ptr new_symbol(int region) {

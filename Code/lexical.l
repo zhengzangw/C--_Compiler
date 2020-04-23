@@ -23,8 +23,6 @@
 #include "ast.h"
 #include "lexical.h"
 #include "syntax.tab.h"
-#include <stdlib.h>
-#include <string.h>
 
 /*--------------------------------------------------------------------
  *

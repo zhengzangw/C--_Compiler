@@ -9,9 +9,6 @@
 
 #include "semantic.h"
 
-#include <stdlib.h>
-#include <string.h>
-
 #include "common.h"
 
 #define semantic_error(type, lineno, desc) \

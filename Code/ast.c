@@ -11,9 +11,6 @@
  */
 
 #include "ast.h"
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
 #include "common.h"
 
 AST_node* ast_root = NULL;

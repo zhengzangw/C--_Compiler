@@ -10,6 +10,7 @@
 #include "ast.h"
 #include "common.h"
 #include "error.h"
+#include "intercode.h"
 #include "semantic.h"
 #include "symbol.h"
 #include "translate.h"
@@ -40,6 +41,14 @@ int main(int argc, char** argv) {
 #ifdef Lab3
         Program(ast_root);
         translate_Program(ast_root);
+        if (argc <= 2) {
+            output_intercode(stdout);
+        } else {
+            FILE* fp = fopen(argv[2], "w");
+            output_intercode(fp);
+            fclose(fp);
+        }
+
 #endif
     } else {
         print_error();
