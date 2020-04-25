@@ -42,10 +42,10 @@ int main(int argc, char** argv) {
         Program(ast_root);
         translate_Program(ast_root);
         if (argc <= 2) {
-            output_intercode(stdout);
+            output_intercodes(stdout);
         } else {
             FILE* fp = fopen(argv[2], "w");
-            output_intercode(fp);
+            output_intercodes(fp);
             fclose(fp);
         }
 
