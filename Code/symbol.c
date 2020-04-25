@@ -52,8 +52,9 @@ unsigned int hash_pjw(char* name) {
 }
 
 int hash_same(Symbol_ptr node_new, Symbol_ptr node_old) {
-    int activate = (node_old->is_activate && node_new->region <= node_old->region) ||
-                   node_old->is_proto || node_new->is_proto;
+    int activate =
+        (node_old->is_activate && node_new->region <= node_old->region) ||
+        node_old->is_proto || node_new->is_proto;
     if (activate && strcmp(node_new->name, node_old->name) == 0) {
         switch (node_new->type->kind) {
             case FUNCTION:
@@ -98,7 +99,8 @@ Symbol* hash_find(char* name, SEARCH_TYPE kind) {
     Symbol_ptr cur = hash_table[index];
     Symbol_ptr opt = NULL;
     while (cur) {
-        if (cur->is_activate && strcmp(name, cur->name) == 0) {
+        if ((cur->is_activate || kind == SEARCH_EASY) &&
+            strcmp(name, cur->name) == 0) {
             if (!opt || opt->region < cur->region) {
                 switch (kind) {
                     case SEARCH_FUNCTION:
@@ -113,6 +115,7 @@ Symbol* hash_find(char* name, SEARCH_TYPE kind) {
                             opt = cur;
                         break;
                     case SEARCH_ALL:
+					case SEARCH_EASY:
                         opt = cur;
                 }
             }
