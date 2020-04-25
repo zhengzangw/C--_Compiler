@@ -13,6 +13,7 @@
 #define _TRANSLATE_H
 
 #include "ast.h"
+#include "intercode.h"
 
 /*** High-Level Definitions ***/
 
@@ -35,7 +36,11 @@ void translate_Stmt(AST_node* cur);
 
 /*** Expression ***/
 
-void translate_Exp(AST_node* cur);
+void translate_Exp(AST_node* cur, Operand place);
+void translate_Cond(AST_node* cur, Operand label_true, Operand label_false);
+#define RETURN(i) new_ir_1(IR_RET, t##i)
+#define LABEL(i) new_ir_1(IR_LABEL, label##i)
+#define GOTO(i) new_ir_1(IR_GOTO, label##i)
 
 #endif
 
