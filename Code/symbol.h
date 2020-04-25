@@ -16,7 +16,13 @@
 
 typedef enum _BASIC_TYPE { UNKNOWN, INT, FLOAT } BASIC_TYPE;
 typedef enum _KIND { BASIC, ARRAY, STRUCTURE, FUNCTION } KIND;
-typedef enum _SEARCH_TYPE {SEARCH_ALL, SEARCH_VARIABLE, SEARCH_FUNCTION, SEARCH_PROTO} SEARCH_TYPE;
+typedef enum _SEARCH_TYPE {
+    SEARCH_ALL,
+    SEARCH_VARIABLE,
+    SEARCH_FUNCTION,
+    SEARCH_PROTO,
+	SEARCH_EASY
+} SEARCH_TYPE;
 typedef struct _Type* Type_ptr;
 typedef struct _Symbol* Symbol_ptr;
 typedef struct _Type {
@@ -39,7 +45,7 @@ typedef struct _Type {
             Type_ptr ret;
             int params_num;
             Symbol_ptr params;
-			int is_claim, claim_lineno;
+            int is_claim, claim_lineno;
         } function;
     } u;
 } Type;
@@ -51,9 +57,9 @@ static Type UNKNOWN_TYPE = {BASIC, {UNKNOWN}};
 typedef struct _Symbol {
     char* name;
     Type_ptr type;
-	// nxt: the next symbol in same hash slot
-	// cross_nxt: the components of structure/function
-	// compst_nxt: the next symbol in same block
+    // nxt: the next symbol in same hash slot
+    // cross_nxt: the components of structure/function
+    // compst_nxt: the next symbol in same block
     Symbol_ptr nxt, cross_nxt, compst_nxt;
     int region, is_activate, is_proto;
 } Symbol;
