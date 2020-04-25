@@ -9,13 +9,11 @@
  * Copyright 2020 NJU, Zangwei Zheng
  */
 
-
 #include "translate.h"
 
 #include "common.h"
-#include "symbol.h"
 #include "intercode.h"
-
+#include "symbol.h"
 
 /*** High-Level Definitions ***/
 
@@ -39,7 +37,7 @@ void translate_ExtDef(AST_node* cur) {
     // ExtDef -> Specifier ExtDecList SEMI
     // ExtDef -> Specifier FunDec CompSt
     if (astcmp(1, FunDec) && astcmp(2, CompSt)) {
-		translate_FunDec(cur->child[1]);
+        translate_FunDec(cur->child[1]);
         translate_CompSt(cur->child[2]);
     }
     // ExtDef -> Specifier FunDec SEMI
@@ -55,7 +53,8 @@ void translate_FunDec(AST_node* cur) {
     if (cur->child_num == 4) {
         AST_node* varlist = cur->child[2];
         while (true) {
-            new_ir_1(IR_PARAM, new_var(varlist->child[0]->child[1]->val));
+            new_ir_1(IR_PARAM,
+                     new_var(varlist->child[0]->child[1]->child[0]->val));
             if (varlist->child_num == 3) {
                 varlist = varlist->child[2];
             } else {
@@ -199,7 +198,7 @@ void translate_Exp(AST_node* cur, Operand place) {
             for (int i = 0; i < arg_list_num; ++i) {
                 new_ir_1(IR_ARG, arg_lists[i]);
             }
-            new_ir_2(IR_CALL, place, new_func(cur->child[0]->name));
+            new_ir_2(IR_CALL, place, new_func(cur->child[0]->val));
         }
     }
     // LP Exp RP
@@ -248,7 +247,16 @@ void translate_Exp(AST_node* cur, Operand place) {
         Operand t2 = new_temp();
         translate_Exp(cur->child[0], t1);
         translate_Exp(cur->child[2], t2);
-        new_ir_3(IR_ADD, place, t1, t2);
+        IR_TYPE arith_type;
+        if (astcmp(1, PLUS))
+            arith_type = IR_ADD;
+        else if (astcmp(1, MINUS))
+            arith_type = IR_SUB;
+        else if (astcmp(1, STAR))
+            arith_type = IR_MUL;
+        else if (astcmp(1, DIV))
+            arith_type = IR_DIV;
+        new_ir_3(arith_type, place, t1, t2);
     }
     // MINUS Exp
     else if (cur->child_num == 2) {

@@ -20,6 +20,7 @@ InterCodes intercodes_t = NULL;
 
 void insert_intercode(InterCode ir) {
     InterCodes tmp_code = (InterCodes)malloc(sizeof(struct InterCodes_));
+	//output_intercode(ir, stdout);
     tmp_code->code = ir;
     if (intercodes_s) {
         tmp_code->next = intercodes_s;
