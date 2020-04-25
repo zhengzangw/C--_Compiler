@@ -7,7 +7,7 @@
 /Code/lex.yy.c
 /Code/syntax.tab.*
 
-/Test/*.cmm
+/Test
 
 parser
 *.zip
@@ -15,3 +15,5 @@ compilers-tests/**
 .DS_Store
 .vscode
 .devcontainer
+
+irsim

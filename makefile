@@ -11,7 +11,7 @@ CI = ./CI4C--_Compiler/autotest.sh
 CC = gcc
 FLEX = flex
 BISON = bison
-CFLAGS = -std=c99 -g
+CFLAGS = -std=c99 -g -Werror
 
 CFILES = $(shell find $(SRC)/ -name "*.c")
 OBJS = $(CFILES:.c=.o)
@@ -39,6 +39,8 @@ syntax-c: $(YFILE)
 
 .PHONY: clean test
 test: parser
+	./parser ./Test/test1.cmm ./Test/test1.ir
+test1: parser
 	./parser ./Test/test1.cmm
 testall:
 	$(CI) ./parser -l 2
