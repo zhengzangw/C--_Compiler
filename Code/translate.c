@@ -82,6 +82,7 @@ int calculate_Array(Type_ptr p) {
     }
 }
 
+Symbol_ptr struct_assist = NULL;
 void translate_VarDec(AST_node* cur) {
     // VarDec -> VarDec LB INT RB
     if (cur->child_num == 4) {
@@ -93,6 +94,10 @@ void translate_VarDec(AST_node* cur) {
         if (tmp->type->kind == ARRAY) {
             int size = calculate_Array(tmp->type);
             new_ir_2(IR_DEC, new_var(tmp->name), new_size(size));
+        } else {
+            if (struct_assist)
+                new_ir_2(IR_DEC, new_var(tmp->name),
+                         new_size(struct_size(struct_assist)));
         }
     }
 }
@@ -109,7 +114,12 @@ void translate_DefList(AST_node* cur) {
 }
 
 void translate_Def(AST_node* cur) {
+    struct_assist = NULL;
     // Def -> Specifier DecList SEMI
+    if (strcmp(cur->child[0]->child[0]->name, "StructSpecifier") == 0) {
+        struct_assist = hash_find(
+            cur->child[0]->child[0]->child[1]->child[0]->val, SEARCH_EASY);
+    }
     translate_DecList(cur->child[1]);
 }
 
@@ -128,7 +138,7 @@ void translate_Dec(AST_node* cur) {
     // Dec -> VarDec ASSIGNOP Exp
     if (cur->child_num == 3) {
         Operand t1 = new_temp();
-		translate_Exp(cur->child[2], t1);
+        translate_Exp(cur->child[2], t1);
         new_ir_2(IR_ASSIGN, new_var(cur->child[0]->child[0]->val), t1);
     }
 }
@@ -249,6 +259,29 @@ int arg_list_num = 0;
 Type_ptr array_assist_cur = NULL;
 int is_left = false;
 
+int struct_offset(Symbol_ptr s, char* id) {
+    int size = 0;
+    for (Symbol_ptr p = s->type->u.structure; p; p = p->cross_nxt) {
+        if (strcmp(p->name, id) == 0) break;
+        switch (p->type->kind) {
+            case BASIC:
+                size += 4;
+                break;
+            case ARRAY:
+                size += calculate_Array(p->type);
+                break;
+            case STRUCTURE:
+                size += struct_size(s);
+                break;
+            default:
+                break;
+        }
+    }
+    return size;
+}
+
+int struct_size(Symbol_ptr s) { return struct_offset(s, ""); }
+
 void translate_Args(AST_node* cur) {
     // Exp
     Operand t1 = new_temp();
@@ -289,11 +322,12 @@ void translate_Exp(AST_node* cur, Operand place) {
             strcmp(cur->child[0]->child[0]->name, "ID") == 0) {
             Symbol_ptr p = hash_find(cur->child[0]->child[0]->val, SEARCH_EASY);
             array_assist_cur = p->type;
+            Operand tt = new_temp();
+            translate_Exp(cur->child[0], tt);
             if (p->is_param)
-                new_ir_2(IR_ASSIGN, t1, new_var(cur->child[0]->child[0]->val));
+                new_ir_2(IR_ASSIGN, t1, tt);
             else
-                new_ir_2(IR_GET_ADDR, t1,
-                         new_var(cur->child[0]->child[0]->val));
+                new_ir_2(IR_GET_ADDR, t1, tt);
         } else {
             translate_Exp(cur->child[0], t1);
         }
@@ -321,7 +355,21 @@ void translate_Exp(AST_node* cur, Operand place) {
     }
     // Exp DOT ID
     else if (astcmp(1, DOT)) {
-        // TODO
+        Symbol_ptr p = hash_find(cur->child[0]->child[0]->val, SEARCH_EASY);
+        Operand t1 = new_temp();
+        Operand t2 = new_temp();
+        if (p->is_param)
+            new_ir_2(IR_ASSIGN, t1, new_var(cur->child[0]->child[0]->val));
+        else
+            new_ir_2(IR_GET_ADDR, t1, new_var(cur->child[0]->child[0]->val));
+        int size = struct_offset(p, cur->child[2]->val);
+        if (is_left)
+            new_ir_3(IR_ADD, place, t1, new_int(size));
+        else {
+            Operand t3 = new_temp();
+            new_ir_3(IR_ADD, t3, t1, new_int(size));
+            new_ir_2(IR_GET_VAL, place, t3);
+        }
     }
     // Exp ASSIGNOP Exp
     else if (astcmp(1, ASSIGNOP)) {
@@ -330,8 +378,7 @@ void translate_Exp(AST_node* cur, Operand place) {
         if (cur->child[0]->child_num == 1 &&
             strcmp(cur->child[0]->child[0]->name, "ID") == 0) {
             new_ir_2(IR_ASSIGN, new_var(cur->child[0]->child[0]->val), t1);
-        } else if (cur->child[0]->child_num == 4 &&
-                   strcmp(cur->child[0]->child[1]->name, "LB") == 0) {
+        } else {
             Operand t2 = new_temp();
             is_left = 1;
             translate_Exp(cur->child[0], t2);

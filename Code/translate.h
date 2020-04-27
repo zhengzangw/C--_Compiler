@@ -15,6 +15,9 @@
 #include "ast.h"
 #include "intercode.h"
 
+int struct_size(Symbol_ptr s);
+int struct_offset(Symbol_ptr s, char* id);
+
 /*** High-Level Definitions ***/
 
 void translate_Program(AST_node* cur);
