@@ -16,4 +16,4 @@ compilers-tests/**
 .vscode
 .devcontainer
 
-irsim
+irsim*

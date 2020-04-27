@@ -70,6 +70,7 @@ Symbol_ptr new_symbol(int region);
 void hash_create();
 int hash_insert(Symbol_ptr node);
 Symbol* hash_find(char* name, SEARCH_TYPE kind);
+Symbol* hash_find_struct(char* name, Type_ptr s);
 // Compst
 void compst_destroy(int depth);
 

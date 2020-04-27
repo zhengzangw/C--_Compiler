@@ -15,8 +15,9 @@
 #include "ast.h"
 #include "intercode.h"
 
-int struct_size(Symbol_ptr s);
-int struct_offset(Symbol_ptr s, char* id);
+int calculate_Struct(Type_ptr s);
+int calculate_Struct_Offset(Type_ptr s, char* id);
+int calculate_Array(Type_ptr p);
 
 /*** High-Level Definitions ***/
 
@@ -45,11 +46,8 @@ void translate_Stmt(AST_node* cur);
 
 /*** Expression ***/
 
-void translate_Exp(AST_node* cur, Operand place);
+void translate_Exp(AST_node* cur, Operand place, int is_left);
 void translate_Cond(AST_node* cur, Operand label_true, Operand label_false);
-#define RETURN(i) new_ir_1(IR_RET, t##i)
-#define LABEL(i) new_ir_1(IR_LABEL, label##i)
-#define GOTO(i) new_ir_1(IR_GOTO, label##i)
 
 #endif
 

@@ -19,7 +19,7 @@ Symbol_ptr new_symbol(int region) {
     tmp->region = region;
     tmp->is_activate = 1;
     tmp->is_proto = 0;
-	tmp->is_param = 0;
+    tmp->is_param = 0;
     return tmp;
 }
 
@@ -95,6 +95,13 @@ int hash_insert(Symbol_ptr node) {
     return 0;
 }
 
+Symbol* hash_find_struct(char* name, Type_ptr s) {
+    for (Symbol_ptr p = s->u.structure; p; p = p->cross_nxt) {
+        if (strcmp(name, p->name) == 0) return p;
+    }
+	return NULL;
+}
+
 Symbol* hash_find(char* name, SEARCH_TYPE kind) {
     unsigned int index = hash_pjw(name);
     Symbol_ptr cur = hash_table[index];
@@ -116,7 +123,7 @@ Symbol* hash_find(char* name, SEARCH_TYPE kind) {
                             opt = cur;
                         break;
                     case SEARCH_ALL:
-					case SEARCH_EASY:
+                    case SEARCH_EASY:
                         opt = cur;
                 }
             }

@@ -3,9 +3,6 @@
  * Project: C--_Compiler
  * File Created: 2020-04-21
  * Author: Zangwei Zheng (zzw@smail.nju.edu.cn)
- * -----
- * Modified By: Zangwei Zheng (zzw@smail.nju.edu.cn)
- * -----
  * Copyright 2020 NJU, Zangwei Zheng
  */
 
@@ -49,14 +46,14 @@ void output_op(Operand op, FILE* fp) {
         case OP_CONSTANT:
             fprintf(fp, "#%s", op->u.val);
             break;
-		case OP_INT:
+        case OP_INT:
             fprintf(fp, "#%d", op->u.value);
             break;
         case OP_VARIABLE:
             fprintf(fp, "%s", op->u.variable->name);
             break;
-		case OP_SIZE:
-			fprintf(fp, "%d", op->u.size);
+        case OP_SIZE:
+            fprintf(fp, "%d", op->u.size);
         default:
             break;
     }
@@ -113,6 +110,10 @@ void output_intercode(InterCode ir, FILE* fp) {
             output_order("RETURN");
         case IR_ARG:
             output_order("ARG");
+        case IR_ARG_ADDR:
+            fputs("ARG &", fp);
+            output_op(ir->x, fp);
+            break;
         case IR_CALL:
             output_assign("CALL ");
         case IR_PARAM:
@@ -123,9 +124,9 @@ void output_intercode(InterCode ir, FILE* fp) {
             output_order("WRITE");
         case IR_DEC:
             fputs("DEC ", fp);
-			output_op(ir->x, fp);
-			fputs(" ", fp);
-			output_op(ir->y, fp);
+            output_op(ir->x, fp);
+            fputs(" ", fp);
+            output_op(ir->y, fp);
             break;
         case IR_ASSIGN_ADDR:
             fputs("*", fp);
@@ -219,7 +220,10 @@ void new_ir_1(IR_TYPE type, Operand op1) {
 }
 
 void new_ir_2(IR_TYPE type, Operand op1, Operand op2) {
-    if (type == IR_ASSIGN && op1 == NULL) return;
+    if (type == IR_CALL && op1 == NULL) {
+        op1 = new_temp();
+    } else if (op1 == NULL)
+        return;
     InterCode tmp = (InterCode)malloc(sizeof(struct InterCode_));
     tmp->kind = type;
     tmp->x = op1;
