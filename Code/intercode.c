@@ -20,7 +20,7 @@ InterCodes intercodes_t = NULL;
 
 void insert_intercode(InterCode ir) {
     InterCodes tmp_code = (InterCodes)malloc(sizeof(struct InterCodes_));
-	//output_intercode(ir, stdout);
+    // output_intercode(ir, stdout);
     tmp_code->code = ir;
     if (intercodes_s) {
         tmp_code->next = intercodes_s;
@@ -49,9 +49,14 @@ void output_op(Operand op, FILE* fp) {
         case OP_CONSTANT:
             fprintf(fp, "#%s", op->u.val);
             break;
+		case OP_INT:
+            fprintf(fp, "#%d", op->u.value);
+            break;
         case OP_VARIABLE:
             fprintf(fp, "%s", op->u.variable->name);
             break;
+		case OP_SIZE:
+			fprintf(fp, "%d", op->u.size);
         default:
             break;
     }
@@ -117,7 +122,10 @@ void output_intercode(InterCode ir, FILE* fp) {
         case IR_WRITE:
             output_order("WRITE");
         case IR_DEC:
-            // TODO
+            fputs("DEC ", fp);
+			output_op(ir->x, fp);
+			fputs(" ", fp);
+			output_op(ir->y, fp);
             break;
         case IR_ASSIGN_ADDR:
             fputs("*", fp);
@@ -133,9 +141,9 @@ void output_intercode(InterCode ir, FILE* fp) {
             fputs(" GOTO ", fp);
             output_op(ir->z, fp);
             break;
-		default:
-			fputs("???", fp);
-			break;
+        default:
+            fputs("???", fp);
+            break;
     }
     fputs("\n", fp);
 }
@@ -166,10 +174,24 @@ Operand new_temp() {
     return tmp;
 }
 
-Operand new_int(char* val) {
+Operand new_const(char* val) {
     Operand tmp = (Operand)malloc(sizeof(struct Operand_));
     tmp->kind = OP_CONSTANT;
     strcpy(tmp->u.val, val);
+    return tmp;
+}
+
+Operand new_int(int val) {
+    Operand tmp = (Operand)malloc(sizeof(struct Operand_));
+    tmp->kind = OP_INT;
+    tmp->u.tmp_no = val;
+    return tmp;
+}
+
+Operand new_size(int val) {
+    Operand tmp = (Operand)malloc(sizeof(struct Operand_));
+    tmp->kind = OP_SIZE;
+    tmp->u.size = val;
     return tmp;
 }
 

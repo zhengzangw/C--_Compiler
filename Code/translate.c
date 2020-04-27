@@ -35,6 +35,7 @@ void translate_ExtDefList(AST_node* cur) {
 
 void translate_ExtDef(AST_node* cur) {
     // ExtDef -> Specifier ExtDecList SEMI
+    /* Not Considered */
     // ExtDef -> Specifier FunDec CompSt
     if (astcmp(1, FunDec) && astcmp(2, CompSt)) {
         translate_FunDec(cur->child[1]);
@@ -53,8 +54,16 @@ void translate_FunDec(AST_node* cur) {
     if (cur->child_num == 4) {
         AST_node* varlist = cur->child[2];
         while (true) {
-            new_ir_1(IR_PARAM,
-                     new_var(varlist->child[0]->child[1]->child[0]->val));
+            if (varlist->child[0]->child[1]->child_num == 1) {
+                new_ir_1(IR_PARAM,
+                         new_var(varlist->child[0]->child[1]->child[0]->val));
+            } else {
+                new_ir_1(
+                    IR_PARAM,
+                    new_var(
+                        varlist->child[0]->child[1]->child[0]->child[0]->val));
+            }
+
             if (varlist->child_num == 3) {
                 varlist = varlist->child[2];
             } else {
@@ -64,10 +73,73 @@ void translate_FunDec(AST_node* cur) {
     }
 }
 
+int calculate_Array(Type_ptr p) {
+    if (p->kind == ARRAY) {
+        return p->u.array.base_size =
+                   p->u.array.size * calculate_Array(p->u.array.elem);
+    } else {
+        return 4;
+    }
+}
+
+void translate_VarDec(AST_node* cur) {
+    // VarDec -> VarDec LB INT RB
+    if (cur->child_num == 4) {
+        translate_VarDec(cur->child[0]);
+    }
+    // VarDec -> ID
+    else {
+        Symbol_ptr tmp = hash_find(cur->child[0]->val, SEARCH_EASY);
+        if (tmp->type->kind == ARRAY) {
+            int size = calculate_Array(tmp->type);
+            new_ir_2(IR_DEC, new_var(tmp->name), new_size(size));
+        }
+    }
+}
+
+/*** Local Definitions ***/
+
+void translate_DefList(AST_node* cur) {
+    // DefList -> \epsilon
+    // DefList -> Def DefList
+    translate_Def(cur->child[0]);
+    if (cur->child[1]) {
+        translate_DefList(cur->child[1]);
+    }
+}
+
+void translate_Def(AST_node* cur) {
+    // Def -> Specifier DecList SEMI
+    translate_DecList(cur->child[1]);
+}
+
+void translate_DecList(AST_node* cur) {
+    // DecList -> Dec
+    translate_Dec(cur->child[0]);
+    // DecList -> Dec COMMA DecList
+    if (cur->child[2]) {
+        translate_DefList(cur->child[2]);
+    }
+}
+
+void translate_Dec(AST_node* cur) {
+    // Dec -> VarDec
+    translate_VarDec(cur->child[0]);
+    // Dec -> VarDec ASSIGNOP Exp
+    if (cur->child_num == 3) {
+        Operand t1 = new_temp();
+		translate_Exp(cur->child[2], t1);
+        new_ir_2(IR_ASSIGN, new_var(cur->child[0]->child[0]->val), t1);
+    }
+}
+
 /*** Statments ***/
 
 void translate_CompSt(AST_node* cur) {
     // CompSt -> LC DefList StmtList RC
+    if (cur->child[1]) {
+        translate_DefList(cur->child[1]);
+    }
     if (cur->child[2]) {
         translate_StmtList(cur->child[2]);
     }
@@ -166,13 +238,17 @@ void translate_Cond(AST_node* cur, Operand label_true, Operand label_false) {
     {
         Operand t1 = new_temp();
         translate_Exp(cur, t1);
-        new_ir_if("!=", t1, new_int("0"), label_true);
+        new_ir_if("!=", t1, new_const("0"), label_true);
         GOTO(_false);
     }
 }
 
+// Assist Global Variable
 Operand arg_lists[64];
 int arg_list_num = 0;
+Type_ptr array_assist_cur = NULL;
+int is_left = false;
+
 void translate_Args(AST_node* cur) {
     // Exp
     Operand t1 = new_temp();
@@ -207,7 +283,41 @@ void translate_Exp(AST_node* cur, Operand place) {
     }
     // Exp LB Exp RB
     else if (astcmp(1, LB)) {
-        // TODO
+        // Get Address
+        Operand t1 = new_temp();
+        if (cur->child[0]->child_num == 1 &&
+            strcmp(cur->child[0]->child[0]->name, "ID") == 0) {
+            Symbol_ptr p = hash_find(cur->child[0]->child[0]->val, SEARCH_EASY);
+            array_assist_cur = p->type;
+            if (p->is_param)
+                new_ir_2(IR_ASSIGN, t1, new_var(cur->child[0]->child[0]->val));
+            else
+                new_ir_2(IR_GET_ADDR, t1,
+                         new_var(cur->child[0]->child[0]->val));
+        } else {
+            translate_Exp(cur->child[0], t1);
+        }
+        // Get Index
+        Operand t2 = new_temp();
+        translate_Exp(cur->child[2], t2);
+        // Get Offset
+        Operand t3 = new_temp();
+        if (array_assist_cur->u.array.elem->kind == ARRAY) {
+            new_ir_3(
+                IR_MUL, t3, t2,
+                new_int(array_assist_cur->u.array.elem->u.array.base_size));
+            new_ir_3(IR_ADD, place, t1, t3);
+        } else {
+            new_ir_3(IR_MUL, t3, t2, new_int(4));
+            if (is_left)
+                new_ir_3(IR_ADD, place, t1, t3);
+            else {
+                Operand t4 = new_temp();
+                new_ir_3(IR_ADD, t4, t1, t3);
+                new_ir_2(IR_GET_VAL, place, t4);
+            }
+        }
+        array_assist_cur = array_assist_cur->u.array.elem;
     }
     // Exp DOT ID
     else if (astcmp(1, DOT)) {
@@ -220,6 +330,13 @@ void translate_Exp(AST_node* cur, Operand place) {
         if (cur->child[0]->child_num == 1 &&
             strcmp(cur->child[0]->child[0]->name, "ID") == 0) {
             new_ir_2(IR_ASSIGN, new_var(cur->child[0]->child[0]->val), t1);
+        } else if (cur->child[0]->child_num == 4 &&
+                   strcmp(cur->child[0]->child[1]->name, "LB") == 0) {
+            Operand t2 = new_temp();
+            is_left = 1;
+            translate_Exp(cur->child[0], t2);
+            is_left = 0;
+            new_ir_2(IR_ASSIGN_ADDR, t2, t1);
         }
         new_ir_2(IR_ASSIGN, place, t1);
         // TODO
@@ -232,10 +349,10 @@ void translate_Exp(AST_node* cur, Operand place) {
              astcmp(1, RELOP)) {
         Operand label1 = new_label();
         Operand label2 = new_label();
-        new_ir_2(IR_ASSIGN, place, new_int("0"));
+        new_ir_2(IR_ASSIGN, place, new_const("0"));
         translate_Cond(cur, label1, label2);
         LABEL(1);
-        new_ir_2(IR_ASSIGN, place, new_int("1"));
+        new_ir_2(IR_ASSIGN, place, new_const("1"));
         LABEL(2);
     }
     // Exp PLUS Exp
@@ -262,7 +379,7 @@ void translate_Exp(AST_node* cur, Operand place) {
     else if (cur->child_num == 2) {
         Operand t1 = new_temp();
         translate_Exp(cur->child[1], t1);
-        new_ir_3(IR_SUB, place, new_int("0"), t1);
+        new_ir_3(IR_SUB, place, new_const("0"), t1);
     }
     // ID
     else if (astcmp(0, ID)) {
@@ -271,7 +388,7 @@ void translate_Exp(AST_node* cur, Operand place) {
     }
     // INT
     else if (astcmp(0, INT)) {
-        Operand val = new_int(cur->child[0]->val);
+        Operand val = new_const(cur->child[0]->val);
         new_ir_2(IR_ASSIGN, place, val);
     }
     // FLOAT

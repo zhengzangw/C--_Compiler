@@ -22,27 +22,30 @@ typedef enum OP_TYPE_ {
     OP_TEMP,
     OP_VARIABLE,
     OP_CONSTANT,
+    OP_INT,
     OP_FUNCTION,
-
-    OP_ADDRESS
-
+    OP_SIZE
 } OP_TYPE;
 typedef struct Operand_* Operand;
 struct Operand_ {
     OP_TYPE kind;
     union {
-        int label_no;         // OP_LABEL
         int tmp_no;           // OP_TEMP
-        char val[128];        // OP_FUNCTION, OP_CONSTANT
         Symbol_ptr variable;  // OP_VARIABLE
+        int label_no;         // OP_LABEL
+        char val[128];        // OP_FUNCTION, OP_CONSTANT
+        int value;            // OP_CONSTANT
+        int size;             // OP_SIZE
     } u;
 };
 
-Operand new_label();
-Operand new_temp();
-Operand new_int(char* val);
-Operand new_func(char* val);
-Operand new_var(char* val);
+Operand new_temp();            // OP_TEMP
+Operand new_var(char* val);    // OP_VARIABLE
+Operand new_label();           // OP_LABEL
+Operand new_func(char* val);   // OP_FUNCTION
+Operand new_int(int val);      // OP_CONSTANT
+Operand new_const(char* val);  // OP_CONSTANT
+Operand new_size(int val);     // OP_SIZE
 
 /*** Intercode ***/
 

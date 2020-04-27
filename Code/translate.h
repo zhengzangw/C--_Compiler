@@ -25,8 +25,14 @@ void translate_ExtDecList(AST_node* cur);
 /*** Declarators ***/
 
 void translate_FunDec(AST_node* cur);
-void translate_VarList(AST_node* cur);
-void translate_ParamDec(AST_node* cur);
+void translate_VarDec(AST_node* cur);
+
+/*** Local Definitions ***/
+
+void translate_DefList(AST_node* cur);
+void translate_Def(AST_node* cur);
+void translate_DecList(AST_node* cur);
+void translate_Dec(AST_node* cur);
 
 /*** Statments ***/
 
