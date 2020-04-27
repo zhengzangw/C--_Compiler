@@ -257,6 +257,7 @@ Symbol_ptr FunDec(AST_node* cur, Type_ptr specifier_type, int is_claim) {
 Symbol_ptr VarList(AST_node* cur, Symbol_ptr func) {
     func->type->u.function.params_num++;
     Symbol_ptr tmp = ParamDec(cur->child[0]);
+	tmp->is_param = 1;
     // Error[3]
     if (hash_insert(tmp)) {
         semantic_error_option(3, cur->child[0]->lineno, "Redefined variable",

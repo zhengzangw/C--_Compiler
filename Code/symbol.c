@@ -19,6 +19,7 @@ Symbol_ptr new_symbol(int region) {
     tmp->region = region;
     tmp->is_activate = 1;
     tmp->is_proto = 0;
+	tmp->is_param = 0;
     return tmp;
 }
 

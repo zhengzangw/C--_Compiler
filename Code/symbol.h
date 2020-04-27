@@ -35,6 +35,7 @@ typedef struct _Type {
         struct {
             Type_ptr elem;
             int size;
+			int base_size;
         } array;
 
         // STRUCTRURE
@@ -61,7 +62,7 @@ typedef struct _Symbol {
     // cross_nxt: the components of structure/function
     // compst_nxt: the next symbol in same block
     Symbol_ptr nxt, cross_nxt, compst_nxt;
-    int region, is_activate, is_proto;
+    int region, is_activate, is_proto, is_param;
 } Symbol;
 
 Symbol_ptr new_symbol(int region);
