@@ -14,8 +14,6 @@
 
 /*** Assitant Function ***/
 
-Operand arg_lists[64];  // for Arg
-int arg_list_num = 0;   // for Arg
 Type_ptr exp_type = NULL;
 
 int calculate_Array(Type_ptr p) {
@@ -278,10 +276,10 @@ void translate_Cond(AST_node* cur, Operand label_true, Operand label_false) {
 void translate_Args(AST_node* cur) {
     // Exp
     Operand t1 = new_temp();
-    translate_Exp(cur->child[0], t1, true);
-    arg_lists[arg_list_num++] = t1;
+    translate_Exp(cur->child[0], t1, false);
     // Exp COMMA Args
     if (cur->child_num > 1) translate_Args(cur->child[2]);
+	new_ir_1(IR_ARG, t1);
 }
 
 void translate_Exp(AST_node* cur, Operand place, int is_left) {
@@ -295,12 +293,8 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
             translate_Exp(cur->child[2]->child[0], t1, false);
 			new_ir_1(IR_WRITE, t1);
         } else {
-            arg_list_num = 0;
             if (cur->child_num > 3) {
                 translate_Args(cur->child[2]);
-            }
-            for (int i = arg_list_num - 1; i >= 0; --i) {
-                new_ir_1(IR_ARG, arg_lists[i]);
             }
             new_ir_2(IR_CALL, place, new_func(cur->child[0]->val));
         }

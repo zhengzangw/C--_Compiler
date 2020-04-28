@@ -232,6 +232,7 @@ void new_ir_2(IR_TYPE type, Operand op1, Operand op2) {
 }
 
 void new_ir_3(IR_TYPE type, Operand op1, Operand op2, Operand op3) {
+    if (op1 == NULL) return;
     InterCode tmp = (InterCode)malloc(sizeof(struct InterCode_));
     tmp->kind = type;
     tmp->x = op1;
