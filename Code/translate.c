@@ -203,7 +203,7 @@ void translate_Stmt(AST_node* cur) {
         translate_Cond(cur->child[2], label2, label3);
         LABEL(2);
         translate_Stmt(cur->child[4]);
-		GOTO(1);
+        GOTO(1);
         LABEL(3);
     }
     // Stmt -> IF LP Exp RP Stmt
@@ -279,7 +279,7 @@ void translate_Args(AST_node* cur) {
     translate_Exp(cur->child[0], t1, false);
     // Exp COMMA Args
     if (cur->child_num > 1) translate_Args(cur->child[2]);
-	new_ir_1(IR_ARG, t1);
+    new_ir_1(IR_ARG, t1);
 }
 
 void translate_Exp(AST_node* cur, Operand place, int is_left) {
@@ -291,7 +291,7 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
         } else if (strcmp(cur->child[0]->val, "write") == 0) {
             Operand t1 = new_temp();
             translate_Exp(cur->child[2]->child[0], t1, false);
-			new_ir_1(IR_WRITE, t1);
+            new_ir_1(IR_WRITE, t1);
         } else {
             if (cur->child_num > 3) {
                 translate_Args(cur->child[2]);
@@ -365,7 +365,30 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
         } else {
             Operand t2 = new_temp();
             translate_Exp(cur->child[0], t2, true);
-            new_ir_2(IR_ASSIGN_ADDR, t2, t1);
+            if (exp_type->kind == ARRAY) {
+                // SPECIAL CASE: array = array
+                int size1 = calculate_Array(tmp_exp_type);
+                int size2 = calculate_Array(exp_type);
+                int size = size1 < size2 ? size1 : size2;
+                Operand label1 = new_label();
+                Operand label2 = new_label();
+                Operand label3 = new_label();
+                Operand t_max = new_temp();
+                Operand t_temp = new_temp();
+                new_ir_3(IR_ADD, t_max, t2, new_int(size));
+                LABEL(1);
+                new_ir_if("<", t2, t_max, label2);
+				GOTO(3);
+                LABEL(2);
+                new_ir_2(IR_GET_VAL, t_temp, t1);
+                new_ir_2(IR_ASSIGN_ADDR, t2, t_temp);
+                new_ir_3(IR_ADD, t1, t1, new_int(4));
+                new_ir_3(IR_ADD, t2, t2, new_int(4));
+                GOTO(1);
+                LABEL(3);
+            } else {
+                new_ir_2(IR_ASSIGN_ADDR, t2, t1);
+            }
         }
         exp_type = tmp_exp_type;
         new_ir_2(IR_ASSIGN, place, t1);
