@@ -11,6 +11,7 @@
 
 #include "common.h"
 
+int var_num = 0;
 Symbol_ptr new_symbol(int region) {
     Symbol_ptr tmp = (Symbol_ptr)malloc(sizeof(Symbol));
     tmp->name = NULL;
@@ -20,6 +21,7 @@ Symbol_ptr new_symbol(int region) {
     tmp->is_activate = 1;
     tmp->is_proto = 0;
     tmp->is_param = 0;
+	tmp->cnt = ++var_num;
     return tmp;
 }
 

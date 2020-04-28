@@ -50,7 +50,7 @@ void output_op(Operand op, FILE* fp) {
             fprintf(fp, "#%d", op->u.value);
             break;
         case OP_VARIABLE:
-            fprintf(fp, "%s", op->u.variable->name);
+            fprintf(fp, "v%d", op->u.variable->cnt);
             break;
         case OP_SIZE:
             fprintf(fp, "%d", op->u.size);
