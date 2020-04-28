@@ -188,9 +188,9 @@ Type_ptr StructSpecifier(AST_node* cur) {
         type->kind = STRUCTURE;
         region_depth += 1;
         // Error[15]
-        region_in_structure = 1;
+        region_in_structure += 1;
         if (cur->child[3]) type->u.structure = DefList(cur->child[3]);
-        region_in_structure = 0;
+        region_in_structure -= 1;
         compst_destroy(region_depth);
         region_depth -= 1;
         if (cur->child[1]) {
