@@ -89,14 +89,18 @@ void translate_FunDec(AST_node* cur) {
     if (cur->child_num == 4) {
         AST_node* varlist = cur->child[2];
         while (true) {
+            // INT
             if (varlist->child[0]->child[1]->child_num == 1) {
                 new_ir_1(IR_PARAM,
                          new_var(varlist->child[0]->child[1]->child[0]->val));
-            } else {
-                new_ir_1(
-                    IR_PARAM,
-                    new_var(
-                        varlist->child[0]->child[1]->child[0]->child[0]->val));
+            }
+            // Array
+            else {
+                AST_node* vardec = varlist->child[0]->child[1];
+                AST_node* name = vardec->child[0];
+                while (strcmp(name->name, "ID") != 0) name = name->child[0];
+				calculate_Array(hash_find(name->val, SEARCH_EASY)->type);
+                new_ir_1(IR_PARAM, new_var(name->val));
             }
 
             if (varlist->child_num == 3) {
