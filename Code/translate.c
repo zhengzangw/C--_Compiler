@@ -360,7 +360,9 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
         translate_Exp(cur->child[2], t1, false);
         Type_ptr tmp_exp_type = exp_type;
         if (cur->child[0]->child_num == 1 &&
-            strcmp(cur->child[0]->child[0]->name, "ID") == 0) {
+            strcmp(cur->child[0]->child[0]->name, "ID") == 0 &&
+            hash_find(cur->child[0]->child[0]->val, SEARCH_EASY)->type->kind !=
+                ARRAY) {
             new_ir_2(IR_ASSIGN, new_var(cur->child[0]->child[0]->val), t1);
         } else {
             Operand t2 = new_temp();
