@@ -83,17 +83,22 @@ void build_cfg(InterCodes st, int f_no) {
     BasicBlock_ptr p_b = enter;
     while (p_b) {
         if (p_b->finish) {
-			switch (p->code->kind)
-			{
-			case IR_GOTO:
-				/* code */
-				break;
-
-			default:
-				break;
-			}
-            p_b->jump_to =
-                bb_at(label_belong[p_b->finish->code->x->u.label_no], f_no);
+            switch (p_b->finish->code->kind) {
+                case IR_GOTO:
+                    p_b->jump_to = bb_at(
+                        label_belong[p_b->finish->code->x->u.label_no], f_no);
+                    break;
+                case IR_RELOP:
+                    p_b->jump_to = bb_at(
+                        label_belong[p_b->finish->code->z->u.label_no], f_no);
+                    break;
+                case IR_RET:
+                    p_b->jump_to =
+                        bb_at(label_belong[funcs[f_no].num_bb - 1], f_no);
+                    break;
+                default:
+                    break;
+            }
         }
         p_b = p_b->adj_to;
     }

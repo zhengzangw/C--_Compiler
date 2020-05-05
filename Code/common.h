@@ -26,6 +26,10 @@
 #define OUTFLOAT(x) printf("\e[31m%s\e[0m\n", x)
 #define true 1
 #define false 0
+#define O1
+#ifdef O2
+	#define O1
+#endif
 
 //#define YYDEBUG 1
 // extern int yydebug;

@@ -17,7 +17,7 @@
 Type_ptr exp_type = NULL;
 
 int calculate_Array(Type_ptr p) {
-	if (p->u.array.base_size > 0) return p->u.array.base_size;
+    if (p->u.array.base_size > 0) return p->u.array.base_size;
     if (p->kind == ARRAY) {
         return p->u.array.base_size =
                    p->u.array.size * calculate_Array(p->u.array.elem);
@@ -100,7 +100,7 @@ void translate_FunDec(AST_node* cur) {
                 AST_node* vardec = varlist->child[0]->child[1];
                 AST_node* name = vardec->child[0];
                 while (strcmp(name->name, "ID") != 0) name = name->child[0];
-				calculate_Array(hash_find(name->val, SEARCH_EASY)->type);
+                calculate_Array(hash_find(name->val, SEARCH_EASY)->type);
                 new_ir_1(IR_PARAM, new_var(name->val));
             }
 
@@ -322,9 +322,37 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
         Operand t3 = new_temp();
         exp_type = tmp_exp_type->u.array.elem;
         if (exp_type->kind == ARRAY) {
+#ifdef O1
+            if (t2->kind == OP_CONSTANT) {
+                int c = t2->u.value * exp_type->u.array.base_size;
+                if (!c)
+                    *place = *t1;
+                else
+                    new_ir_3(IR_ADD, place, t1, new_int(c));
+                return;
+            }
+#endif
             new_ir_3(IR_MUL, t3, t2, new_int(exp_type->u.array.base_size));
             new_ir_3(IR_ADD, place, t1, t3);
         } else {
+#ifdef O1
+            if (t2->kind == OP_CONSTANT) {
+                int c;
+                if (exp_type->kind == STRUCTURE)
+                    c = t2->u.value * calculate_Struct(exp_type);
+                else
+                    c = t2->u.value * 4;
+                if (is_left || exp_type->kind == ARRAY ||
+                    exp_type->kind == STRUCTURE)
+                    new_ir_3(IR_ADD, place, t1, new_int(c));
+                else {
+                    Operand t4 = new_temp();
+                    new_ir_3(IR_ADD, t4, t1, new_int(c));
+                    new_ir_2(IR_GET_VAL, place, t4);
+                }
+                return;
+            }
+#endif
             if (exp_type->kind == STRUCTURE)
                 new_ir_3(IR_MUL, t3, t2, new_int(calculate_Struct(exp_type)));
             else
@@ -349,7 +377,7 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
         int size = calculate_Struct_Offset(exp_type, id_name);
         exp_type = hash_find_struct(id_name, exp_type)->type;
 
-		if (exp_type->kind == ARRAY) calculate_Array(exp_type);
+        if (exp_type->kind == ARRAY) calculate_Array(exp_type);
         if (is_left || exp_type->kind == ARRAY || exp_type->kind == STRUCTURE)
             // Left Value
             new_ir_3(IR_ADD, place, t1, new_int(size));
@@ -424,6 +452,24 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
         Operand t2 = new_temp();
         translate_Exp(cur->child[0], t1, is_left);
         translate_Exp(cur->child[2], t2, is_left);
+#ifdef O1
+        if (place && place->kind == OP_TEMP) {
+            if (t1->kind == OP_CONSTANT && t2->kind == OP_CONSTANT) {
+                int c;
+                if (astcmp(1, PLUS))
+                    c = t1->u.value + t2->u.value;
+                else if (astcmp(1, MINUS))
+                    c = t1->u.value - t2->u.value;
+                else if (astcmp(1, STAR))
+                    c = t1->u.value * t2->u.value;
+                else if (astcmp(1, DIV))
+                    c = t1->u.value / t2->u.value;
+                place->kind = OP_CONSTANT;
+                place->u.value = c;
+                return;
+            }
+        }
+#endif
         IR_TYPE arith_type;
         if (astcmp(1, PLUS))
             arith_type = IR_ADD;
@@ -450,14 +496,28 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
             !p->is_param) {
             new_ir_2(IR_GET_ADDR, place, val);
         } else {
+#ifdef O1
+            if (place) {
+                place->kind = val->kind;
+                place->u = val->u;
+            }
+#else
             new_ir_2(IR_ASSIGN, place, val);
+#endif
         }
     }
     // INT
     else if (astcmp(0, INT)) {
         exp_type = &INT_TYPE;
         Operand val = new_const(cur->child[0]->val);
+#ifdef O1
+        if (place) {
+            place->kind = val->kind;
+            place->u = val->u;
+        }
+#else
         new_ir_2(IR_ASSIGN, place, val);
+#endif
     }
     // FLOAT
     else if (astcmp(0, FLOAT)) {

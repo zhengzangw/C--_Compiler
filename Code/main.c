@@ -43,7 +43,9 @@ int main(int argc, char** argv) {
 #ifdef Lab3
         Program(ast_root);
         translate_Program(ast_root);
-		//optimize();
+#ifdef O1
+		optimize();
+#endif
         FILE* fp;
         if (argc <= 2) {
             fp = stdout;

@@ -15,9 +15,10 @@
 #include "intercode.h"
 
 void optimize() {
-    // Linear
+    // Linear 1
     InterCodes p = intercodes_t;
     int *label_h = (int *)calloc(label_num, sizeof(int));
+    int *label_comb = (int *)calloc(label_num, sizeof(int));
     while (p) {
         if (!p->code->disabled) {
             // IF_RELOP case 1
@@ -62,12 +63,48 @@ void optimize() {
     }
     // CFG
     build_procedures();
-    // Linear
+    // Linear 2
+    p = intercodes_t;
+    InterCodes pre = NULL;
+    while (p) {
+        if (!p->code->disabled) {
+            // Delete useless label
+            if (p->code->kind == IR_LABEL && !label_h[p->code->x->u.label_no])
+                p->code->disabled = 1;
+            // Combine labels
+            if (!p->code->disabled && p->code->kind == OP_LABEL && pre &&
+                pre->code->kind == OP_LABEL) {
+                if (label_comb[pre->code->x->u.label_no])
+                    label_comb[p->code->x->u.label_no] =
+                        label_comb[pre->code->x->u.label_no];
+                else
+                    label_comb[p->code->x->u.label_no] =
+                        pre->code->x->u.label_no;
+            }
+            if (!p->code->disabled) pre = p;
+        }
+        p = p->prev;
+    }
+	// Linear 3
     p = intercodes_t;
     while (p) {
-        // Delete useless label
-        if (p->code->kind == IR_LABEL && !label_h[p->code->x->u.label_no]) {
-            p->code->disabled = 1;
+        if (!p->code->disabled) {
+            // Combine labels
+            if (p->code->kind == IR_LABEL &&
+                label_comb[p->code->x->u.label_no]) {
+                p->code->disabled = 1;
+            }
+            else if (p->code->kind == IR_GOTO &&
+                     label_comb[p->code->x->u.label_no]) {
+                int l = p->code->x->u.label_no;
+                p->code->x = new_label();
+                p->code->x->u.label_no = label_comb[l];
+            } else if (p->code->kind == IR_RELOP &&
+                       label_comb[p->code->z->u.label_no]) {
+                int l = p->code->z->u.label_no;
+                p->code->z = new_label();
+                p->code->z->u.label_no = label_comb[l];
+            }
         }
         p = p->prev;
     }

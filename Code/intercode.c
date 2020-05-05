@@ -44,9 +44,6 @@ void output_op(Operand op, FILE* fp) {
             fprintf(fp, "%s", op->u.val);
             break;
         case OP_CONSTANT:
-            fprintf(fp, "#%s", op->u.val);
-            break;
-        case OP_INT:
             fprintf(fp, "#%d", op->u.value);
             break;
         case OP_VARIABLE:
@@ -179,14 +176,14 @@ Operand new_temp() {
 Operand new_const(char* val) {
     Operand tmp = (Operand)malloc(sizeof(struct Operand_));
     tmp->kind = OP_CONSTANT;
-    strcpy(tmp->u.val, val);
+    tmp->u.value = atoi(val);
     return tmp;
 }
 
 Operand new_int(int val) {
     Operand tmp = (Operand)malloc(sizeof(struct Operand_));
-    tmp->kind = OP_INT;
-    tmp->u.tmp_no = val;
+    tmp->kind = OP_CONSTANT;
+    tmp->u.value = val;
     return tmp;
 }
 

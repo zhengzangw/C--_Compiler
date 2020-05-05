@@ -22,7 +22,6 @@ typedef enum OP_TYPE_ {
     OP_TEMP,
     OP_VARIABLE,
     OP_CONSTANT,
-    OP_INT,
     OP_FUNCTION,
     OP_SIZE
 } OP_TYPE;
