@@ -77,6 +77,7 @@ struct InterCode_ {
     IR_TYPE kind;
     Operand x, y, z;
     char relop[64];
+	int disabled;
 };
 
 void new_ir_1(IR_TYPE type, Operand op1);
@@ -98,7 +99,11 @@ struct InterCodes_ {
 
 void insert_intercode(InterCode ir);
 void output_intercode(InterCode, FILE*);
-void output_intercodes(FILE*);
+void output_intercodes(InterCodes, FILE*);
+
+extern InterCodes intercodes_s;
+extern InterCodes intercodes_t;
+extern int label_num;
 
 #endif
 

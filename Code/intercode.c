@@ -149,10 +149,11 @@ void output_intercode(InterCode ir, FILE* fp) {
     fputs("\n", fp);
 }
 
-void output_intercodes(FILE* fp) {
-    InterCodes p = intercodes_t;
+void output_intercodes(InterCodes p, FILE* fp) {
     while (p) {
-        output_intercode(p->code, fp);
+        if (!p->code->disabled) {
+            output_intercode(p->code, fp);
+        }
         p = p->prev;
     }
 }
@@ -216,6 +217,9 @@ void new_ir_1(IR_TYPE type, Operand op1) {
     InterCode tmp = (InterCode)malloc(sizeof(struct InterCode_));
     tmp->kind = type;
     tmp->x = op1;
+	tmp->y = NULL;
+	tmp->z = NULL;
+	tmp->disabled = 0;
     insert_intercode(tmp);
 }
 
@@ -228,6 +232,8 @@ void new_ir_2(IR_TYPE type, Operand op1, Operand op2) {
     tmp->kind = type;
     tmp->x = op1;
     tmp->y = op2;
+	tmp->z = NULL;
+	tmp->disabled = 0;
     insert_intercode(tmp);
 }
 
@@ -238,6 +244,7 @@ void new_ir_3(IR_TYPE type, Operand op1, Operand op2, Operand op3) {
     tmp->x = op1;
     tmp->y = op2;
     tmp->z = op3;
+	tmp->disabled = 0;
     insert_intercode(tmp);
 }
 
@@ -247,6 +254,7 @@ void new_ir_if(char* relop, Operand op1, Operand op2, Operand op3) {
     tmp->x = op1;
     tmp->y = op2;
     tmp->z = op3;
+	tmp->disabled = 0;
     strcpy(tmp->relop, relop);
     insert_intercode(tmp);
 }

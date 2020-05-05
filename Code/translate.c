@@ -378,7 +378,7 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
                 new_ir_3(IR_ADD, t_max, t2, new_int(size));
                 LABEL(1);
                 new_ir_if("<", t2, t_max, label2);
-				GOTO(3);
+                GOTO(3);
                 LABEL(2);
                 new_ir_2(IR_GET_VAL, t_temp, t1);
                 new_ir_2(IR_ASSIGN_ADDR, t2, t_temp);

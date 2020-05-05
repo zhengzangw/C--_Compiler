@@ -14,6 +14,8 @@
 #include "semantic.h"
 #include "symbol.h"
 #include "translate.h"
+#include "optimize.h"
+#include "cfg.h"
 
 #define Lab3
 
@@ -41,14 +43,16 @@ int main(int argc, char** argv) {
 #ifdef Lab3
         Program(ast_root);
         translate_Program(ast_root);
+		//optimize();
+        FILE* fp;
         if (argc <= 2) {
-            output_intercodes(stdout);
+            fp = stdout;
         } else {
-            FILE* fp = fopen(argv[2], "w");
-            output_intercodes(fp);
-            fclose(fp);
+            fp = fopen(argv[2], "w");
         }
-
+		//log_cfg();
+        output_intercodes(intercodes_t, fp);
+        fclose(fp);
 #endif
     } else {
         print_error();
