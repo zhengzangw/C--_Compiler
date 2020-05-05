@@ -17,6 +17,7 @@
 Type_ptr exp_type = NULL;
 
 int calculate_Array(Type_ptr p) {
+	if (p->u.array.base_size > 0) return p->u.array.base_size;
     if (p->kind == ARRAY) {
         return p->u.array.base_size =
                    p->u.array.size * calculate_Array(p->u.array.elem);
@@ -348,6 +349,7 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
         int size = calculate_Struct_Offset(exp_type, id_name);
         exp_type = hash_find_struct(id_name, exp_type)->type;
 
+		if (exp_type->kind == ARRAY) calculate_Array(exp_type);
         if (is_left || exp_type->kind == ARRAY || exp_type->kind == STRUCTURE)
             // Left Value
             new_ir_3(IR_ADD, place, t1, new_int(size));
