@@ -43,7 +43,7 @@ test: parser
 test1: parser
 	./parser ./Test/test1.cmm
 testall:
-	$(CI) ./parser -l 3
+	$(CI) ./parser -l 3 --ins
 clean:
 	rm -f $(SRC)/parser $(SRC)/lex.yy.c $(SRC)/syntax.tab.c $(SRC)/syntax.tab.h $(SRC)/syntax.output
 	rm -f $(OBJS) $(OBJS:.o=.d)
