@@ -54,9 +54,13 @@ test2: clean main_2 parser
 	$(CI) ./parser -l 2 -q
 test3: clean main_3 parser
 	$(CI) ./parser -l 3 --ins -q
-testall: test1 test2 test3
+testall:
+	make test1
+	make test2
+	make test3
 clean:
 	rm -f $(SRC)/parser $(SRC)/lex.yy.c $(SRC)/syntax.tab.c $(SRC)/syntax.tab.h $(SRC)/syntax.output
 	rm -f $(OBJS) $(OBJS:.o=.d)
 	rm -f $(LFC) $(YFC) $(YFC:.c=.h)
 	rm -f $(SRC)/*~
+
