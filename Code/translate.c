@@ -322,7 +322,7 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
         Operand t3 = new_temp();
         exp_type = tmp_exp_type->u.array.elem;
         if (exp_type->kind == ARRAY) {
-#ifdef O1
+#ifdef OP_LINEAR_CONST_ARR
             if (t2->kind == OP_CONSTANT) {
                 int c = t2->u.value * exp_type->u.array.base_size;
                 if (!c)
@@ -335,7 +335,7 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
             new_ir_3(IR_MUL, t3, t2, new_int(exp_type->u.array.base_size));
             new_ir_3(IR_ADD, place, t1, t3);
         } else {
-#ifdef O1
+#ifdef OP_LINEAR_CONST_ARR
             if (t2->kind == OP_CONSTANT) {
                 int c;
                 if (exp_type->kind == STRUCTURE)
@@ -344,10 +344,16 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
                     c = t2->u.value * 4;
                 if (is_left || exp_type->kind == ARRAY ||
                     exp_type->kind == STRUCTURE)
-                    new_ir_3(IR_ADD, place, t1, new_int(c));
+                    if (!c)
+                        *place = *t1;
+                    else
+                        new_ir_3(IR_ADD, place, t1, new_int(c));
                 else {
                     Operand t4 = new_temp();
-                    new_ir_3(IR_ADD, t4, t1, new_int(c));
+					if (!c)
+						*t4 = *t1;
+					else
+						new_ir_3(IR_ADD, t4, t1, new_int(c));
                     new_ir_2(IR_GET_VAL, place, t4);
                 }
                 return;
@@ -452,7 +458,7 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
         Operand t2 = new_temp();
         translate_Exp(cur->child[0], t1, is_left);
         translate_Exp(cur->child[2], t2, is_left);
-#ifdef O1
+#ifdef OP_LINEAR_CONST
         if (place && place->kind == OP_TEMP) {
             if (t1->kind == OP_CONSTANT && t2->kind == OP_CONSTANT) {
                 int c;
@@ -468,6 +474,26 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
                 place->u.value = c;
                 return;
             }
+        }
+        if (t2->kind == OP_TEMP && t2->u.value == 0) {
+            if (astcmp(1, PLUS) || astcmp(1, MINUS)) {
+                place->kind = t1->kind;
+                place->u = t1->u;
+            } else if (astcmp(1, STAR)) {
+                place->kind = OP_CONSTANT;
+                place->u.value = 0;
+            }
+            return;
+        }
+        if (t1->kind == OP_TEMP && t1->u.value == 0) {
+            if (astcmp(1, PLUS) || astcmp(1, MINUS)) {
+                place->kind = t2->kind;
+                place->u = t2->u;
+            } else if (astcmp(1, STAR)) {
+                place->kind = OP_CONSTANT;
+                place->u.value = 0;
+            }
+            return;
         }
 #endif
         IR_TYPE arith_type;
@@ -496,7 +522,7 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
             !p->is_param) {
             new_ir_2(IR_GET_ADDR, place, val);
         } else {
-#ifdef O1
+#ifdef OP_ID
             if (place) {
                 place->kind = val->kind;
                 place->u = val->u;
@@ -510,7 +536,7 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
     else if (astcmp(0, INT)) {
         exp_type = &INT_TYPE;
         Operand val = new_const(cur->child[0]->val);
-#ifdef O1
+#ifdef OP_INT
         if (place) {
             place->kind = val->kind;
             place->u = val->u;

@@ -26,9 +26,21 @@
 #define OUTFLOAT(x) printf("\e[31m%s\e[0m\n", x)
 #define true 1
 #define false 0
-#define O1
+
+// Optimization
+#define O2
 #ifdef O2
 	#define O1
+#endif
+#ifdef O1
+	#define OP_INT
+	#define OP_ID
+	#define OP_LINEAR_CONST
+	#define OP_LINEAR_CONST_ARR
+	#define OP_LINEAR_LABEL
+#endif
+#ifdef O2
+	#define OP_CONST
 #endif
 
 //#define YYDEBUG 1

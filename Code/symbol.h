@@ -76,6 +76,8 @@ void compst_destroy(int depth);
 
 void _hash_print_all_symbols();
 
+extern int var_num;
+
 #endif
 
 /*--------------------------------------------------------------------

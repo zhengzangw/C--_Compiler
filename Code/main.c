@@ -52,7 +52,6 @@ int main(int argc, char** argv) {
         } else {
             fp = fopen(argv[2], "w");
         }
-		//log_cfg();
         output_intercodes(intercodes_t, fp);
         fclose(fp);
 #endif

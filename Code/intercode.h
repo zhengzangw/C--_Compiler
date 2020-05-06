@@ -103,6 +103,7 @@ void output_intercodes(InterCodes, FILE*);
 extern InterCodes intercodes_s;
 extern InterCodes intercodes_t;
 extern int label_num;
+extern int temp_num;
 
 #endif
 

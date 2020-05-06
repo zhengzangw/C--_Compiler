@@ -15,6 +15,7 @@
 #include "intercode.h"
 
 void optimize() {
+#ifdef OP_LINEAR_LABEL
     // Linear 1
     InterCodes p = intercodes_t;
     int *label_h = (int *)calloc(label_num, sizeof(int));
@@ -61,8 +62,6 @@ void optimize() {
         }
         p = p->prev;
     }
-    // CFG
-    build_procedures();
     // Linear 2
     p = intercodes_t;
     InterCodes pre = NULL;
@@ -108,6 +107,12 @@ void optimize() {
         }
         p = p->prev;
     }
+#endif
+	// CFG
+#ifdef OP_CONST
+    build_procedures();
+	reduce_constant();
+#endif
 }
 
 /*--------------------------------------------------------------------
