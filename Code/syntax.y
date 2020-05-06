@@ -17,6 +17,7 @@
  *
  *------------------------------------------------------------------*/
 #include "common.h"
+#include "syntax.h"
 #include "error.h"
 #include "ast.h"
 #include "lex.yy.c"

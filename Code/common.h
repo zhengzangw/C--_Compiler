@@ -28,7 +28,6 @@
 #define false 0
 
 // Optimization
-// #define DEBUG
 #define OP3
 #ifdef OP3
 	#define OP2
@@ -51,9 +50,12 @@
 	#define OP_ASSIGN_TO_VAR
 #endif
 
-
-//#define YYDEBUG 1
-// extern int yydebug;
+// Debug
+// #define DEBUG
+// #define YYDEBUG 1
+#ifdef YYDEBUG
+	extern int yydebug;
+#endif
 
 /*--------------------------------------------------------------------
  *
@@ -64,15 +66,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-/*--------------------------------------------------------------------
- *
- * Flex & Bison
- *
- *------------------------------------------------------------------*/
-void yyrestart(FILE*);
-int yyparse(void);
-int yyerror(char*);
 
 #endif
 

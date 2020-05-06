@@ -8,14 +8,15 @@
  */
 
 #include "ast.h"
+#include "cfg.h"
 #include "common.h"
 #include "error.h"
 #include "intercode.h"
+#include "optimize.h"
 #include "semantic.h"
 #include "symbol.h"
+#include "syntax.h"
 #include "translate.h"
-#include "optimize.h"
-#include "cfg.h"
 
 #define Lab3
 
@@ -44,7 +45,7 @@ int main(int argc, char** argv) {
         Program(ast_root);
         translate_Program(ast_root);
 #ifdef OP1
-		optimize();
+        optimize();
 #endif
         FILE* fp;
         if (argc <= 2) {
