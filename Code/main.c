@@ -18,7 +18,9 @@
 #include "syntax.h"
 #include "translate.h"
 
-#define Lab3
+#ifndef Lab
+	#define Lab 3
+#endif
 
 int main(int argc, char** argv) {
     if (argc <= 1) return 1;
@@ -28,23 +30,26 @@ int main(int argc, char** argv) {
         return 1;
     }
     yyrestart(f);
-
-    // yydebug = 1;
+#ifdef YYDEBUG
+    yydebug = 1;
+#endif
 
     yyparse();
 
     if (error_num == 0) {
-#ifdef Lab1
+#if Lab == 1
         ast_print(ast_root, 0);
 #endif
-#ifdef Lab2
-        Program(ast_root);
-        // _hash_print_all_symbols();
+#if Lab == 2
+        Program(ast_root);  // semantic errors
+#ifdef DEBUG
+        _hash_print_all_symbols();
 #endif
-#ifdef Lab3
+#endif
+#if Lab == 3
         Program(ast_root);
         translate_Program(ast_root);
-#ifdef OP1
+#if OP >= 2
         optimize();
 #endif
         FILE* fp;
@@ -57,7 +62,7 @@ int main(int argc, char** argv) {
         fclose(fp);
 #endif
     } else {
-        print_error();
+        print_error();  // lexical & semantic errors
     }
 
     return 0;

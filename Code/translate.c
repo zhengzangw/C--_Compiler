@@ -287,6 +287,10 @@ void translate_Args(AST_node* cur) {
     new_ir_1(IR_ARG, t1);
 }
 
+#ifdef OP_ASSIGN_TO_VAR
+int op_assign_to_var = 0;
+#endif
+
 void translate_Exp(AST_node* cur, Operand place, int is_left) {
     // ID LP Args RP
     // ID LP RP
@@ -407,7 +411,9 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
             if (strcmp(cur->child[2]->child[0]->name, "INT") != 0 &&
                 strcmp(cur->child[2]->child[0]->name, "ID") != 0) {
                 t1 = new_var(cur->child[0]->child[0]->val);
+                op_assign_to_var = 1;
                 translate_Exp(cur->child[2], t1, false);
+                op_assign_to_var = 0;
                 tmp_exp_type = exp_type;
             } else {
 #endif
@@ -465,11 +471,22 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
              astcmp(1, RELOP)) {
         Operand label1 = new_label();
         Operand label2 = new_label();
-        new_ir_2(IR_ASSIGN, place, new_const("0"));
+		Operand now = place;
+#ifdef OP_ASSIGN_TO_VAR
+        if (op_assign_to_var){
+			now = new_temp();
+		}
+#endif
+        new_ir_2(IR_ASSIGN, now, new_const("0"));
         translate_Cond(cur, label1, label2);
         LABEL(1);
-        new_ir_2(IR_ASSIGN, place, new_const("1"));
+        new_ir_2(IR_ASSIGN, now, new_const("1"));
         LABEL(2);
+#ifdef OP_ASSIGN_TO_VAR
+        if (op_assign_to_var) {
+            new_ir_2(IR_ASSIGN, place, now);
+        }
+#endif
     }
     // Exp PLUS Exp
     // Exp MINUS Exp

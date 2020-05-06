@@ -35,7 +35,9 @@ void build_procedures() {
                 p = p->prev;
                 InterCodes param = p;
                 while (p->code->kind == IR_PARAM) p = p->prev;
+                // printf("FUNC=%d\n", num_funcs - 1);
                 build_cfg(p, num_funcs - 1);
+                // printf("===\n");
                 while (param->code->kind == IR_PARAM) {
                     funcs[num_funcs - 1]
                         .enter->in_v[param->code->x->u.variable->cnt] = NAC;
@@ -68,7 +70,7 @@ BasicBlock_ptr new_bb(InterCodes cur, InterCodes pre, int f_no) {
     BasicBlock_ptr bb = (BasicBlock_ptr)malloc(sizeof(BasicBlock));
     bb->start = cur;
     bb->finish = NULL;
-    bb->jump_to = NULL;
+    bb->jump_to = bb->move_to = bb->adj_to = NULL;
     bb->is_start = bb->is_finish = 0;
     bb->from_num = 0;
     init_bb_latice(bb);
@@ -124,41 +126,42 @@ void build_cfg(InterCodes st, int f_no) {
             BasicBlock_ptr t;
             switch (p_b->finish->code->kind) {
                 case IR_GOTO:
-					// JUMP
+                    // JUMP
                     t = bb_at(label_belong[p_b->finish->code->x->u.label_no],
                               f_no);
                     p_b->jump_to = t;
                     t->from[t->from_num++] = p_b;
-					// ADJ
+                    // ADJ
                     p_b->move_to = NULL;
                     break;
                 case IR_RELOP:
-					// JUMP
+                    // JUMP
                     t = bb_at(label_belong[p_b->finish->code->z->u.label_no],
                               f_no);
                     p_b->jump_to = t;
                     p_b->adj_to->from[p_b->adj_to->from_num++] = p_b;
-					// ADJ
+                    // ADJ
                     p_b->move_to = p_b->adj_to;
                     t->from[t->from_num++] = p_b;
                     break;
                 case IR_RET:
-					// JUMP
+                    // JUMP
                     t = bb_at(funcs[f_no].num_bb - 1, f_no);
                     p_b->jump_to = t;
                     p_b->adj_to->from[p_b->adj_to->from_num++] = p_b;
-					// ADJ
+                    // ADJ
                     p_b->move_to = NULL;
                     break;
                 default:
-					// JUMP
+                    // JUMP
                     p_b->jump_to = NULL;
-					// ADJ
+                    // ADJ
                     p_b->move_to = p_b->adj_to;
                     p_b->adj_to->from[p_b->adj_to->from_num++] = p_b;
                     break;
             }
         }
+
         p_b = p_b->adj_to;
     }
 }
@@ -176,7 +179,7 @@ void log_cfg() {
                 printf(">>> Block(%d) adj:%d ", p->id, p->adj_to->id);
             }
             if (p->jump_to) printf("goto:%d ", p->jump_to->id);
-			if (p->move_to) printf("adjto:%d ", p->move_to->id);
+            if (p->move_to) printf("adjto:%d ", p->move_to->id);
             if (p->from_num) {
                 printf("from:");
                 for (int i = 0; i < p->from_num; ++i)

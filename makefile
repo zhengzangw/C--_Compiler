@@ -26,6 +26,14 @@ parser: syntax $(filter-out $(LFO),$(OBJS))
 	$(CC) $(CFLAGS) -o parser $(filter-out $(LFO),$(OBJS)) $(LEX_FLAGS) -ly
 	@cp parser $(SRC)
 
+main_1: $(SRC)/main.c $(SRC)/common.h
+	$(CC) $(CFLAGS) -DLab=1 -c -o $(SRC)/main.o $(SRC)/main.c
+main_2: $(SRC)/main.c $(SRC)/common.h
+	$(CC) $(CFLAGS) -DLab=2 -c -o $(SRC)/main.o $(SRC)/main.c
+main_3: $(SRC)/main.c $(SRC)/common.h
+	$(CC) $(CFLAGS) -DLab=3 -c -o $(SRC)/main.o $(SRC)/main.c
+
+
 syntax: lexical syntax-c
 	$(CC) $(CFLAGS) -c $(YFC) -o $(YFO)
 
@@ -38,12 +46,15 @@ syntax-c: $(YFILE)
 -include $(patsubst %.o, %.d, $(OBJS))
 
 .PHONY: clean test
-test: parser
+test: clean parser
 	./parser ./Test/test1.cmm ./Test/test1.ir
-test1: parser
-	./parser ./Test/test1.cmm
-testall:
+test1: clean main_1 parser
+	$(CI) ./parser -l 1
+test2: clean main_2 parser
+	$(CI) ./parser -l 2
+test3: clean main_3 parser
 	$(CI) ./parser -l 3 --ins
+testall: test1 test2 test3
 clean:
 	rm -f $(SRC)/parser $(SRC)/lex.yy.c $(SRC)/syntax.tab.c $(SRC)/syntax.tab.h $(SRC)/syntax.output
 	rm -f $(OBJS) $(OBJS:.o=.d)

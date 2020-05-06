@@ -18,6 +18,8 @@
  * define
  *
  *------------------------------------------------------------------*/
+
+// Assist
 #define LOG(x) printf("\e[32m%s\e[0m\n", x)
 #define LOGINT(x) printf("\e[32m%d\e[0m\n", x)
 #define LOGFLOAT(x) printf("\e[32m%s\e[0m\n", x)
@@ -28,20 +30,18 @@
 #define false 0
 
 // Optimization
-#define OP3
-#ifdef OP3
-	#define OP2
+#define OP 3
+#if OP >= 3
 	#define OP_CFG_CONST
 	#define OP_CFG_DEAD_CODE
 #endif
-#ifdef OP2
-	#define OP1
+#if OP >= 2
 	#define OP_LINEAR_USELESS_LABEL
 	#define OP_LINEAR_REPLICATE_LABEL
 	#define OP_LINEAR_DIRECT_GOTO
 	#define OP_LINEAR_REDUCE_RELOP
 #endif
-#ifdef OP1
+#if OP >= 1
 	#define OP_INT
 	#define OP_ID
 	#define OP_TEMP_REPLACE
