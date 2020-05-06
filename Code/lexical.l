@@ -30,6 +30,7 @@
  *
  *------------------------------------------------------------------*/
 int yycolumn = 1;
+int fileno(FILE *stream);
 char* number(char *digits);
 char* floatvalue(char *digits);
 
