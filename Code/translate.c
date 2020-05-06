@@ -322,7 +322,7 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
         Operand t3 = new_temp();
         exp_type = tmp_exp_type->u.array.elem;
         if (exp_type->kind == ARRAY) {
-#ifdef OP_LINEAR_CONST_ARR
+#ifdef OP_ARR_CONST
             if (t2->kind == OP_CONSTANT) {
                 int c = t2->u.value * exp_type->u.array.base_size;
                 if (!c)
@@ -335,7 +335,7 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
             new_ir_3(IR_MUL, t3, t2, new_int(exp_type->u.array.base_size));
             new_ir_3(IR_ADD, place, t1, t3);
         } else {
-#ifdef OP_LINEAR_CONST_ARR
+#ifdef OP_ARR_CONST
             if (t2->kind == OP_CONSTANT) {
                 int c;
                 if (exp_type->kind == STRUCTURE)
@@ -350,10 +350,10 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
                         new_ir_3(IR_ADD, place, t1, new_int(c));
                 else {
                     Operand t4 = new_temp();
-					if (!c)
-						*t4 = *t1;
-					else
-						new_ir_3(IR_ADD, t4, t1, new_int(c));
+                    if (!c)
+                        *t4 = *t1;
+                    else
+                        new_ir_3(IR_ADD, t4, t1, new_int(c));
                     new_ir_2(IR_GET_VAL, place, t4);
                 }
                 return;
@@ -397,14 +397,29 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
     // Exp ASSIGNOP Exp
     else if (astcmp(1, ASSIGNOP)) {
         Operand t1 = new_temp();
-        translate_Exp(cur->child[2], t1, false);
-        Type_ptr tmp_exp_type = exp_type;
+        Type_ptr tmp_exp_type;
+
         if (cur->child[0]->child_num == 1 &&
             strcmp(cur->child[0]->child[0]->name, "ID") == 0 &&
             hash_find(cur->child[0]->child[0]->val, SEARCH_EASY)->type->kind !=
                 ARRAY) {
-            new_ir_2(IR_ASSIGN, new_var(cur->child[0]->child[0]->val), t1);
+#ifdef OP_ASSIGN_TO_VAR
+            if (strcmp(cur->child[2]->child[0]->name, "INT") != 0 &&
+                strcmp(cur->child[2]->child[0]->name, "ID") != 0) {
+                t1 = new_var(cur->child[0]->child[0]->val);
+                translate_Exp(cur->child[2], t1, false);
+                tmp_exp_type = exp_type;
+            } else {
+#endif
+                translate_Exp(cur->child[2], t1, false);
+                tmp_exp_type = exp_type;
+                new_ir_2(IR_ASSIGN, new_var(cur->child[0]->child[0]->val), t1);
+#ifdef OP_ASSIGN_TO_VAR
+            }
+#endif
         } else {
+            translate_Exp(cur->child[2], t1, false);
+            tmp_exp_type = exp_type;
             Operand t2 = new_temp();
             translate_Exp(cur->child[0], t2, true);
             if (exp_type->kind == ARRAY) {
@@ -432,7 +447,14 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
                 new_ir_2(IR_ASSIGN_ADDR, t2, t1);
             }
         }
+
         exp_type = tmp_exp_type;
+#ifdef OP_TEMP_REPLACE
+        if (place && place->kind == OP_TEMP && t1->kind == OP_TEMP) {
+            place->u = t1->u;
+            return;
+        }
+#endif
         new_ir_2(IR_ASSIGN, place, t1);
     }
     // Exp AND Exp
@@ -458,7 +480,7 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
         Operand t2 = new_temp();
         translate_Exp(cur->child[0], t1, is_left);
         translate_Exp(cur->child[2], t2, is_left);
-#ifdef OP_LINEAR_CONST
+#ifdef OP_ARITH_CONST
         if (place && place->kind == OP_TEMP) {
             if (t1->kind == OP_CONSTANT && t2->kind == OP_CONSTANT) {
                 int c;

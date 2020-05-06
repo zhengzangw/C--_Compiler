@@ -28,20 +28,29 @@
 #define false 0
 
 // Optimization
-#define O2
-#ifdef O2
-	#define O1
+// #define DEBUG
+#define OP3
+#ifdef OP3
+	#define OP2
+	#define OP_CFG_CONST
+	#define OP_CFG_DEAD_CODE
 #endif
-#ifdef O1
+#ifdef OP2
+	#define OP1
+	#define OP_LINEAR_USELESS_LABEL
+	#define OP_LINEAR_REPLICATE_LABEL
+	#define OP_LINEAR_DIRECT_GOTO
+	#define OP_LINEAR_REDUCE_RELOP
+#endif
+#ifdef OP1
 	#define OP_INT
 	#define OP_ID
-	#define OP_LINEAR_CONST
-	#define OP_LINEAR_CONST_ARR
-	#define OP_LINEAR_LABEL
+	#define OP_TEMP_REPLACE
+	#define OP_ARITH_CONST
+	#define OP_ARR_CONST
+	#define OP_ASSIGN_TO_VAR
 #endif
-#ifdef O2
-	#define OP_CONST
-#endif
+
 
 //#define YYDEBUG 1
 // extern int yydebug;
@@ -51,10 +60,10 @@
  * include
  *
  *------------------------------------------------------------------*/
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
 /*--------------------------------------------------------------------
  *

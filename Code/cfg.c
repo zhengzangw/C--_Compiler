@@ -20,6 +20,8 @@ int const_change = 1;
 #define UNDEF -2847201
 #define NAC -17182277
 
+/*** Build CFG ***/
+
 void build_cfg(InterCodes, int);
 
 void build_procedures() {
@@ -75,9 +77,8 @@ BasicBlock_ptr new_bb(InterCodes cur, InterCodes pre, int f_no) {
         funcs[f_no].enter = bb;
     } else {
         funcs[f_no].bb->finish = pre;
-        funcs[f_no].bb->adj_to = bb;
+        funcs[f_no].bb->adj_to = funcs[f_no].bb->move_to = bb;
         bb->nxt = funcs[f_no].bb;
-        bb->from[bb->from_num++] = funcs[f_no].bb;
         funcs[f_no].bb = bb;
     }
     bb->id = funcs[f_no].num_bb++;
@@ -123,23 +124,38 @@ void build_cfg(InterCodes st, int f_no) {
             BasicBlock_ptr t;
             switch (p_b->finish->code->kind) {
                 case IR_GOTO:
+					// JUMP
                     t = bb_at(label_belong[p_b->finish->code->x->u.label_no],
                               f_no);
                     p_b->jump_to = t;
                     t->from[t->from_num++] = p_b;
+					// ADJ
+                    p_b->move_to = NULL;
                     break;
                 case IR_RELOP:
+					// JUMP
                     t = bb_at(label_belong[p_b->finish->code->z->u.label_no],
                               f_no);
                     p_b->jump_to = t;
+                    p_b->adj_to->from[p_b->adj_to->from_num++] = p_b;
+					// ADJ
+                    p_b->move_to = p_b->adj_to;
                     t->from[t->from_num++] = p_b;
                     break;
                 case IR_RET:
+					// JUMP
                     t = bb_at(funcs[f_no].num_bb - 1, f_no);
                     p_b->jump_to = t;
-                    t->from[t->from_num++] = p_b;
+                    p_b->adj_to->from[p_b->adj_to->from_num++] = p_b;
+					// ADJ
+                    p_b->move_to = NULL;
                     break;
                 default:
+					// JUMP
+                    p_b->jump_to = NULL;
+					// ADJ
+                    p_b->move_to = p_b->adj_to;
+                    p_b->adj_to->from[p_b->adj_to->from_num++] = p_b;
                     break;
             }
         }
@@ -160,6 +176,7 @@ void log_cfg() {
                 printf(">>> Block(%d) adj:%d ", p->id, p->adj_to->id);
             }
             if (p->jump_to) printf("goto:%d ", p->jump_to->id);
+			if (p->move_to) printf("adjto:%d ", p->move_to->id);
             if (p->from_num) {
                 printf("from:");
                 for (int i = 0; i < p->from_num; ++i)
@@ -199,6 +216,8 @@ void log_cfg() {
         printf("#############\n");
     }
 }
+
+/*** Reduce Constant ***/
 
 int const_val(Operand op, BasicBlock_ptr bb) {
     if (op->kind == OP_CONSTANT) return op->u.value;
@@ -326,19 +345,19 @@ void update_bb(BasicBlock_ptr bb) {
         }
     }
     // Log
-    /*
-printf("IN[%d] ", bb->id);
-for (int i = 0; i < temp_num; ++i) {
-    if (bb->in_t[i] != NAC && bb->in_t[i] != UNDEF) printf("t%d ", i);
-    if (bb->in_t[i] == NAC) printf("t%d=NAC ", i);
-}
-for (int i = 0; i < var_num; ++i) {
-    if (bb->in_v[i] != NAC && bb->in_v[i] != UNDEF) printf("v%d ", i);
-    if (bb->in_v[i] == NAC) printf("v%d=NAC ", i);
-}
-if (bb->is_finish) printf("finish");
-printf("\n");
-    */
+#ifdef DEBUG
+    printf("IN[%d] ", bb->id);
+    for (int i = 0; i < temp_num; ++i) {
+        if (bb->in_t[i] != NAC && bb->in_t[i] != UNDEF) printf("t%d ", i);
+        if (bb->in_t[i] == NAC) printf("t%d=NAC ", i);
+    }
+    for (int i = 0; i < var_num; ++i) {
+        if (bb->in_v[i] != NAC && bb->in_v[i] != UNDEF) printf("v%d ", i);
+        if (bb->in_v[i] == NAC) printf("v%d=NAC ", i);
+    }
+    if (bb->is_finish) printf("finish");
+    printf("\n");
+#endif
     // update bb OUT
     memcpy(bb->out_t_prev, bb->out_t, temp_num * sizeof(int));
     memcpy(bb->out_v_prev, bb->out_v, var_num * sizeof(int));
@@ -349,17 +368,17 @@ printf("\n");
     }
 
     // Log
-    /*
-printf("OUT[%d] ", bb->id);
-for (int i = 0; i < temp_num; ++i) {
-    if (bb->out_t[i] != NAC && bb->out_t[i] != UNDEF) printf("t%d ", i);
-}
-for (int i = 0; i < var_num; ++i) {
-    if (bb->out_v[i] != NAC && bb->out_v[i] != UNDEF) printf("v%d ", i);
-}
-if (bb->is_finish) printf("finish");
-printf("\n");
-    */
+#ifdef DEBUG
+    printf("OUT[%d] ", bb->id);
+    for (int i = 0; i < temp_num; ++i) {
+        if (bb->out_t[i] != NAC && bb->out_t[i] != UNDEF) printf("t%d ", i);
+    }
+    for (int i = 0; i < var_num; ++i) {
+        if (bb->out_v[i] != NAC && bb->out_v[i] != UNDEF) printf("v%d ", i);
+    }
+    if (bb->is_finish) printf("finish");
+    printf("\n");
+#endif
 }
 
 int check_op_const(Operand x, BasicBlock_ptr bb) {
@@ -396,7 +415,9 @@ void reduce_constant() {
             is_changed(bb);
             safe_exit++;
         }
-        // log_cfg();
+#ifdef DEBUG
+        log_cfg();
+#endif
         // printf("safe_exit = %d\n", safe_exit);
         InterCodes p = funcs[i].enter->adj_to->start;
         while (p && p->code->kind != IR_FUNC) {
@@ -417,6 +438,35 @@ void reduce_constant() {
                 }
             }
             p = p->prev;
+        }
+    }
+}
+
+/*** Remove Dead Code ***/
+
+void search_bb(BasicBlock_ptr bb, int *visited) {
+    if (!bb || visited[bb->id]) return;
+    visited[bb->id] = 1;
+    search_bb(bb->move_to, visited);
+    search_bb(bb->jump_to, visited);
+}
+
+void remove_dead_code() {
+    for (int i = 0; i < num_funcs; ++i) {
+        int *visited = (int *)calloc(funcs[i].num_bb + 1, sizeof(int));
+        BasicBlock_ptr bb = funcs[i].enter;
+        search_bb(bb, visited);
+        for (int j = 0; j < funcs[i].num_bb; ++j) {
+            if (!visited[j]) {
+                // printf("ID=%d\n", j);
+                BasicBlock_ptr bb = bb_at(j, i);
+                InterCodes p = bb->start;
+                while (p && p != bb->finish) {
+                    p->code->disabled = 1;
+                    p = p->prev;
+                }
+                if (p) p->code->disabled = 1;
+            }
         }
     }
 }

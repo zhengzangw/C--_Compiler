@@ -21,24 +21,25 @@
 
 typedef struct _BasicBlock* BasicBlock_ptr;
 typedef struct _BasicBlock {
-	int id, is_start, is_finish, from_num;
-	InterCodes start, finish;
-	BasicBlock_ptr adj_to, jump_to, nxt;
-	BasicBlock_ptr from[MAX_BB];
-	// Const Reduction
-	int *in_t, *in_v, *out_t, *out_v, *out_t_prev, *out_v_prev;
+    int id, is_start, is_finish, from_num;
+    InterCodes start, finish;
+    BasicBlock_ptr adj_to, jump_to, move_to, nxt;
+    BasicBlock_ptr from[MAX_BB];
+    // Const Reduction
+    int *in_t, *in_v, *out_t, *out_v, *out_t_prev, *out_v_prev;
 } BasicBlock;
 
 typedef struct _Procedure {
-	InterCodes func;
-	BasicBlock_ptr bb, enter, exit;
-	int num_bb;
+    InterCodes func;
+    BasicBlock_ptr bb, enter, exit;
+    int num_bb;
 } Procedure;
 
 void build_procedures();
 void reduce_constant();
+void remove_dead_code();
 
-//Debug
+// Debug
 void log_cfg();
 
 #endif

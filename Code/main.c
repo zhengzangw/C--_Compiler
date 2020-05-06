@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 #ifdef Lab3
         Program(ast_root);
         translate_Program(ast_root);
-#ifdef O1
+#ifdef OP1
 		optimize();
 #endif
         FILE* fp;
