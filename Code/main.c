@@ -17,9 +17,10 @@
 #include "symbol.h"
 #include "syntax.h"
 #include "translate.h"
+#include "mips.h"
 
 #ifndef Lab
-	#define Lab 3
+#define Lab 4
 #endif
 
 int main(int argc, char** argv) {
@@ -40,14 +41,15 @@ int main(int argc, char** argv) {
 #if Lab == 1
         ast_print(ast_root, 0);
 #endif
-#if Lab == 2
+
+#if Lab >= 2
         Program(ast_root);  // semantic errors
 #ifdef DEBUG
         _hash_print_all_symbols();
 #endif
 #endif
-#if Lab == 3
-        Program(ast_root);
+
+#if Lab >= 3
         translate_Program(ast_root);
 #if OP >= 2
         optimize();
@@ -58,7 +60,17 @@ int main(int argc, char** argv) {
         } else {
             fp = fopen(argv[2], "w");
         }
+#endif
+
+#if Lab == 3
         output_intercodes(intercodes_t, fp);
+#endif
+
+#if Lab == 4
+        output_mips_instructions(intercodes_t, fp);
+#endif
+
+#if Lab >= 3
         fclose(fp);
 #endif
     } else {

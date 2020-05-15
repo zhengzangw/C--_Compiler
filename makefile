@@ -47,7 +47,7 @@ syntax-c: $(YFILE)
 
 .PHONY: clean test
 test: clean parser
-	./parser ./Test/test1.cmm ./Test/test1.ir
+	./parser ./Test/test1.cmm ./Test/test1.s
 test1: clean main_1 parser
 	$(CI) ./parser -l 1 -q
 test2: clean main_2 parser
