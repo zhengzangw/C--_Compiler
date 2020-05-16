@@ -107,10 +107,6 @@ void output_intercode(InterCode ir, FILE* fp) {
             output_order("RETURN");
         case IR_ARG:
             output_order("ARG");
-        case IR_ARG_ADDR:
-            fputs("ARG &", fp);
-            output_op(ir->x, fp);
-            break;
         case IR_CALL:
             output_assign("CALL ");
         case IR_PARAM:
@@ -214,9 +210,9 @@ void new_ir_1(IR_TYPE type, Operand op1) {
     InterCode tmp = (InterCode)malloc(sizeof(struct InterCode_));
     tmp->kind = type;
     tmp->x = op1;
-	tmp->y = NULL;
-	tmp->z = NULL;
-	tmp->disabled = 0;
+    tmp->y = NULL;
+    tmp->z = NULL;
+    tmp->disabled = 0;
     insert_intercode(tmp);
 }
 
@@ -229,8 +225,8 @@ void new_ir_2(IR_TYPE type, Operand op1, Operand op2) {
     tmp->kind = type;
     tmp->x = op1;
     tmp->y = op2;
-	tmp->z = NULL;
-	tmp->disabled = 0;
+    tmp->z = NULL;
+    tmp->disabled = 0;
     insert_intercode(tmp);
 }
 
@@ -241,7 +237,7 @@ void new_ir_3(IR_TYPE type, Operand op1, Operand op2, Operand op3) {
     tmp->x = op1;
     tmp->y = op2;
     tmp->z = op3;
-	tmp->disabled = 0;
+    tmp->disabled = 0;
     insert_intercode(tmp);
 }
 
@@ -251,7 +247,7 @@ void new_ir_if(char* relop, Operand op1, Operand op2, Operand op3) {
     tmp->x = op1;
     tmp->y = op2;
     tmp->z = op3;
-	tmp->disabled = 0;
+    tmp->disabled = 0;
     strcpy(tmp->relop, relop);
     insert_intercode(tmp);
 }

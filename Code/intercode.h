@@ -64,7 +64,6 @@ typedef enum IR_TYPE_ {
     IR_RET,
     IR_DEC,
     IR_ARG,
-    IR_ARG_ADDR,
     IR_CALL,
     IR_PARAM,
     IR_READ,

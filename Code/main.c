@@ -67,6 +67,7 @@ int main(int argc, char** argv) {
 #endif
 
 #if Lab == 4
+        output_intercodes(intercodes_t, stdout);
         output_mips_instructions(intercodes_t, fp);
 #endif
 

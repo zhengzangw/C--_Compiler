@@ -10,4 +10,12 @@
 #include "common.h"
 #include "intercode.h"
 
+typedef struct reg_descriptor_ {
+    int no, is_temp, active;
+} reg_descriptor;
+
+typedef struct var_descriptor_ {
+    int reg, offset;
+} var_descriptor;
+
 void output_mips_instructions(InterCodes, FILE*);
