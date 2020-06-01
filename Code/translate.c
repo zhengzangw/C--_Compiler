@@ -471,11 +471,11 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
              astcmp(1, RELOP)) {
         Operand label1 = new_label();
         Operand label2 = new_label();
-		Operand now = place;
+        Operand now = place;
 #ifdef OP_ASSIGN_TO_VAR
-        if (op_assign_to_var){
-			now = new_temp();
-		}
+        if (op_assign_to_var) {
+            now = new_temp();
+        }
 #endif
         new_ir_2(IR_ASSIGN, now, new_const("0"));
         translate_Cond(cur, label1, label2);
@@ -507,8 +507,11 @@ void translate_Exp(AST_node* cur, Operand place, int is_left) {
                     c = t1->u.value - t2->u.value;
                 else if (astcmp(1, STAR))
                     c = t1->u.value * t2->u.value;
-                else if (astcmp(1, DIV))
-                    c = t1->u.value / t2->u.value;
+                else if (astcmp(1, DIV)) {
+                    // Special handle for a/0
+                    if (!t2->u.value) c = 2147483647;
+                    else c = t1->u.value / t2->u.value;
+                }
                 place->kind = OP_CONSTANT;
                 place->u.value = c;
                 return;

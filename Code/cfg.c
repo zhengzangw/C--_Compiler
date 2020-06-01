@@ -59,7 +59,7 @@ void init_bb_latice(BasicBlock_ptr bb) {
     for (int i = 0; i < temp_num; ++i) {
         bb->in_t[i] = bb->out_t[i] = UNDEF;
     }
-    for (int i = 0; i < temp_num; ++i) {
+    for (int i = 0; i < var_num; ++i) {
         bb->in_v[i] = bb->out_v[i] = UNDEF;
     }
     memcpy(bb->out_t_prev, bb->out_t, temp_num * sizeof(int));

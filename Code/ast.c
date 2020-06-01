@@ -11,6 +11,7 @@
  */
 
 #include "ast.h"
+
 #include "common.h"
 
 AST_node* ast_root = NULL;
@@ -23,6 +24,7 @@ AST_node* ast_create(char* name, char* original_val, char* val, int lineno) {
     strcpy(ret->name, name);
     strcpy(ret->original_val, original_val);
     strcpy(ret->val, val);
+    memset(ret->child, 0, sizeof(ret->child));
     ret->lineno = lineno;
     ret->child_num = 0;
     return ret;

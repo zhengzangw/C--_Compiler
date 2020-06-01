@@ -12,12 +12,12 @@
 #include "common.h"
 #include "error.h"
 #include "intercode.h"
+#include "mips.h"
 #include "optimize.h"
 #include "semantic.h"
 #include "symbol.h"
 #include "syntax.h"
 #include "translate.h"
-#include "mips.h"
 
 #ifndef Lab
 #define Lab 4
@@ -67,7 +67,9 @@ int main(int argc, char** argv) {
 #endif
 
 #if Lab == 4
+#ifdef DEBUG
         output_intercodes(intercodes_t, stdout);
+#endif
         output_mips_instructions(intercodes_t, fp);
 #endif
 

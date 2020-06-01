@@ -30,7 +30,7 @@
 #define false 0
 
 // Optimization
-#define OP 3
+#define OP 2
 #if OP >= 3
 	#define OP_CFG_CONST
 	#define OP_CFG_DEAD_CODE
