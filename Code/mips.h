@@ -11,11 +11,11 @@
 #include "intercode.h"
 
 typedef struct reg_descriptor_ {
-    int no, is_temp, active;
+    int is_temp;
 } reg_descriptor;
 
 typedef struct var_descriptor_ {
-    int reg, offset;
+    int offset;
 } var_descriptor;
 
 void output_mips_instructions(InterCodes, FILE*);

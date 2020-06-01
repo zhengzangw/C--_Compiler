@@ -9,9 +9,9 @@
 
 #include "mips.h"
 
+const int reg[] = {8, 9, 10, 11, 12, 13, 14, 15};
+
 var_descriptor *addr_t, *addr_v;
-reg_descriptor reg_des[36];
-int reg_to_use = 8;
 int fp_offset = 0;
 int cur_arg = 0;
 int args_cnt = 0;
@@ -34,78 +34,36 @@ void output_data(FILE* fp) {
 
 /*** Register Selection ***/
 
-int reg_achieve(FILE* fp) {
-    if (reg_des[reg_to_use].active && reg_des[reg_to_use].is_temp != -1) {
-        var_descriptor* cur;
-        if (reg_des[reg_to_use].is_temp) {
-            cur = &addr_t[reg_des[reg_to_use].no];
-        } else {
-            cur = &addr_v[reg_des[reg_to_use].no];
-        }
-        if (!cur->offset) {
-            fp_offset -= 4;
-            cur->offset = fp_offset;
-        }
-        fprintf(fp, "  sw $%d %d($fp)\n", reg_to_use, cur->offset);
-        // variable not in reg
-        cur->reg = 0;
-        // reg not contain variable
-        reg_des[reg_to_use].active = 0;
+#define li(reg_no, value) fprintf(fp, "  li $%d %d\n", reg_no, value)
+#define lw(reg_no, value) fprintf(fp, "  lw $%d %d($fp)\n", reg_no, value)
+#define sw(reg_no, value) fprintf(fp, "  sw $%d %d($fp)\n", reg_no, value)
+
+#define reg_push(reg_no, op) reg_push_(reg_no, op, fp)
+#define reg_push_x() reg_push_(reg[1], ir->x, fp)
+void reg_push_(int reg_no, Operand op, FILE* fp) {
+    var_descriptor* tmp;
+    if (op->kind == OP_TEMP)
+        tmp = &addr_t[op->u.tmp_no];
+    else if (op->kind == OP_VARIABLE)
+        tmp = &addr_v[op->u.variable->cnt];
+    if (!tmp->offset) {
+        fp_offset -= 4;
+        tmp->offset = fp_offset;
     }
-    int ret = reg_to_use;
-    if (reg_to_use == 15)
-        reg_to_use = 8;
-    else
-        reg_to_use++;
-    return ret;
+    sw(reg_no, tmp->offset);
 }
 
-void reg_push(FILE* fp) {
-    for (int i = 8; i <= 15; ++i) {
-        reg_achieve(fp);
-    }
-}
-
-void reg_deactivate() {
-    for (int i = 8; i <= 15; ++i) {
-        reg_des[i].active = false;
-    }
-}
-
-#define reg(op) reg_(op, fp)
-int reg_(Operand op, FILE* fp) {
-    int ret = 0;
-    if (op->kind == OP_CONSTANT) {
-        ret = reg_achieve(fp);
-        fprintf(fp, "  li $%d %d\n", ret, op->u.value);
-        reg_des[ret].is_temp = -1;
-    } else if (op->kind == OP_TEMP) {
-        if (addr_t[op->u.tmp_no].reg)
-            ret = addr_t[op->u.tmp_no].reg;
-        else {
-            ret = reg_achieve(fp);
-            if (addr_t[op->u.tmp_no].offset)
-                fprintf(fp, "  lw $%d %d($fp)\n", ret,
-                        addr_t[op->u.tmp_no].offset);
-            reg_des[ret].is_temp = 1;
-            reg_des[ret].no = op->u.tmp_no;
-            addr_t[op->u.tmp_no].reg = ret;
-        }
-    } else if (op->kind == OP_VARIABLE) {
-        if (addr_v[op->u.variable->cnt].reg)
-            ret = addr_v[op->u.variable->cnt].reg;
-        else {
-            ret = reg_achieve(fp);
-            if (addr_v[op->u.variable->cnt].offset)
-                fprintf(fp, "  lw $%d %d($fp)\n", ret,
-                        addr_v[op->u.variable->cnt].offset);
-            reg_des[ret].is_temp = 0;
-            reg_des[ret].no = op->u.variable->cnt;
-            addr_v[op->u.variable->cnt].reg = ret;
-        }
-    }
-    reg_des[ret].active = 1;
-    return ret;
+#define reg_pop(reg_no, op) reg_pop_(reg_no, op, fp)
+#define reg_pop_x() reg_pop_(reg[1], ir->x, fp)
+#define reg_pop_y() reg_pop_(reg[2], ir->y, fp)
+#define reg_pop_z() reg_pop_(reg[3], ir->z, fp)
+void reg_pop_(int reg_no, Operand op, FILE* fp) {
+    if (op->kind == OP_CONSTANT)
+        li(reg_no, op->u.value);
+    else if (op->kind == OP_TEMP)
+        lw(reg_no, addr_t[op->u.tmp_no].offset);
+    else if (op->kind == OP_VARIABLE)
+        lw(reg_no, addr_v[op->u.variable->cnt].offset);
 }
 
 /*** Translation ***/
@@ -122,7 +80,7 @@ void arg_sp(FILE* fp, InterCodes p) {
 
 int frame_size;
 int get_frame_size(InterCodes p) {
-    frame_size = (temp_num + var_num) * 4;
+    frame_size = (temp_num + var_num + 1) * 4;
     return frame_size;
 }
 
@@ -137,23 +95,24 @@ void output_mips_instruction(InterCodes irs, FILE* fp) {
                 if (cur_arg < 4)
                     fprintf(fp, "  li $a%d, %d\n", cur_arg, ir->x->u.value);
                 else {
-                    fprintf(fp, "  sw $%d %d($sp)\n", reg(ir->x),
-                            4 * (cur_arg - 4));
+                    reg_pop_x();
+                    fprintf(fp, "  sw $t1 %d($sp)\n", 4 * (cur_arg - 4));
                 }
             } else {
+                reg_pop_x();
                 if (cur_arg < 4)
-                    fprintf(fp, "  move $a%d, $%d\n", cur_arg, reg(ir->x));
+                    fprintf(fp, "  move $a%d, $t1\n", cur_arg);
                 else {
-                    fprintf(fp, "  sw $%d %d($sp)\n", reg(ir->x),
-                            4 * (cur_arg - 4));
+                    fprintf(fp, "  sw $t1 %d($sp)\n", 4 * (cur_arg - 4));
                 }
             }
             cur_arg--;
             break;
         case IR_CALL:
-            reg_push(fp);  // Caller: store caller register
+            // reg_push(fp);  // Caller: store caller register
             fprintf(fp, "  jal %s\n", ir->y->u.val);  // jump to function
-            fprintf(fp, "  move $%d $v0\n", reg(ir->x));
+            fprintf(fp, "  move $t1 $v0\n");
+            reg_push_x();
             if (args_cnt >= 4) {
                 fprintf(fp, "  addi $sp $sp %d\n",
                         4 * (args_cnt - 4));  // restore $sp
@@ -165,7 +124,8 @@ void output_mips_instruction(InterCodes irs, FILE* fp) {
         // Callee
         case IR_PARAM:
             if (param_count < 4) {
-                fprintf(fp, "  move $%d $%d\n", reg(ir->x), 4 + param_count);
+                fprintf(fp, "  move $t1 $%d\n", 4 + param_count);
+                reg_push_x();
             } else {
                 addr_v[ir->x->u.variable->cnt].offset =
                     4 + (param_count - 3) * 4;
@@ -173,7 +133,6 @@ void output_mips_instruction(InterCodes irs, FILE* fp) {
             param_count++;
             break;
         case IR_FUNC:
-            reg_deactivate();
             param_count = 0;
             fprintf(fp, "\n%s:\n", ir->x->u.val);
             fprintf(fp, "  subu $sp $sp %d\n", 2 * 4);
@@ -189,7 +148,8 @@ void output_mips_instruction(InterCodes irs, FILE* fp) {
             if (ir->x->kind == OP_CONSTANT) {
                 fprintf(fp, "  li $v0 %d\n", ir->x->u.value);
             } else {
-                fprintf(fp, "  move $v0, $%d\n", reg(ir->x));
+                reg_pop_x();
+                fprintf(fp, "  move $v0, $t1\n");
             }
             fprintf(fp, "  addi $sp $sp %d\n",
                     frame_size);               // frame size
@@ -205,64 +165,82 @@ void output_mips_instruction(InterCodes irs, FILE* fp) {
             break;
         case IR_GET_ADDR:
             if (ir->y->kind == OP_TEMP)
-                fprintf(fp, "  la $%d %d($fp)\n", reg(ir->x),
+                fprintf(fp, "  la $t1 %d($fp)\n",
                         addr_t[ir->y->u.tmp_no].offset);
             else
-                fprintf(fp, "  la $%d %d($fp)\n", reg(ir->x),
+                fprintf(fp, "  la $t1 %d($fp)\n",
                         addr_v[ir->y->u.variable->cnt].offset);
+            reg_push_x();
             break;
         // Special
         case IR_READ:
             fprintf(fp, "  addi $sp, $sp, -4\n  sw $ra, 0($sp)\n");
-            fprintf(fp, "  jal read\n  move $%d $v0\n", reg(ir->x));
+            fprintf(fp, "  jal read\n  move $t1 $v0\n");
+            reg_push_x();
             fprintf(fp, "  lw $ra 0($sp)\n  addi $sp $sp 4\n");
             break;
         case IR_WRITE:
             fprintf(fp, "  addi $sp, $sp, -4\n  sw $ra, 0($sp)\n");
-            fprintf(fp, "  move $a0, $%d\n", reg(ir->x));
+            reg_pop_x();
+            fprintf(fp, "  move $a0, $t1\n");
             fprintf(fp, "  jal write\n");
             fprintf(fp, "  lw $ra 0($sp)\n  addi $sp $sp 4\n");
             break;
         // Assign & Arith
         case IR_ASSIGN:
             if (ir->y->kind == OP_CONSTANT) {
-                fprintf(fp, "  li $%d %d\n", reg(ir->x), ir->y->u.value);
+                li(reg[1], ir->y->u.value);
             } else {
-                fprintf(fp, "  move $%d $%d\n", reg(ir->x), reg(ir->y));
+                reg_pop_y();
+                fprintf(fp, "  move $t1 $t2\n");
             }
-
+            reg_push_x();
             break;
         case IR_ASSIGN_ADDR:
-            fprintf(fp, "  sw $%d 0($%d)\n", reg(ir->y), reg(ir->x));
+            reg_pop_y();
+            reg_pop_x();
+            fprintf(fp, "  sw $t2 0($t1)\n");
             break;
         case IR_GET_VAL:
-            fprintf(fp, "  lw $%d 0($%d)\n", reg(ir->x), reg(ir->y));
+            reg_pop_y();
+            fprintf(fp, "  lw $t1 0($t2)\n");
+            reg_push_x();
             break;
         case IR_ADD:
-            if (ir->y->kind == OP_CONSTANT) {
-                fprintf(fp, "  addi $%d $%d %d\n", reg(ir->x), reg(ir->y),
-                        ir->z->u.value);
+            if (ir->z->kind == OP_CONSTANT) {
+                reg_pop_y();
+                fprintf(fp, "  addi $t1 $t2 %d\n", ir->z->u.value);
+            } else if (ir->y->kind == OP_CONSTANT) {
+                reg_pop_z();
+                fprintf(fp, "  addi $t1 $t3 %d\n", ir->y->u.value);
             } else {
-                fprintf(fp, "  add $%d $%d $%d\n", reg(ir->x), reg(ir->y),
-                        reg(ir->z));
+                reg_pop_y();
+                reg_pop_z();
+                fprintf(fp, "  add $t1 $t2 $t3\n");
             }
+            reg_push_x();
             break;
         case IR_SUB:
-            if (ir->y->kind == OP_CONSTANT) {
-                fprintf(fp, "  addi $%d $%d %d\n", reg(ir->x), reg(ir->y),
-                        ir->z->u.value);
+            reg_pop_y();
+            if (ir->z->kind == OP_CONSTANT) {
+                fprintf(fp, "  addi $t1 $t2 %d\n", -ir->z->u.value);
             } else {
-                fprintf(fp, "  sub $%d $%d $%d\n", reg(ir->x), reg(ir->y),
-                        reg(ir->z));
+                reg_pop_z();
+                fprintf(fp, "  sub $t1 $t2 $t3\n");
             }
+            reg_push_x();
             break;
         case IR_MUL:
-            fprintf(fp, "  mul $%d $%d $%d\n", reg(ir->x), reg(ir->y),
-                    reg(ir->z));
+            reg_pop_y();
+            reg_pop_z();
+            fprintf(fp, "  mul $t1 $t2 $t3\n");
+            reg_push_x();
             break;
         case IR_DIV:
-            fprintf(fp, "  div $%d $%d\n", reg(ir->y), reg(ir->z));
-            fprintf(fp, "  mflo $%d\n", reg(ir->x));
+            reg_pop_y();
+            reg_pop_z();
+            fprintf(fp, "  div $t2 $t3\n  mflo $t1\n");
+            reg_push_x();
             break;
         // Label & Goto
         case IR_LABEL:
@@ -279,17 +257,18 @@ void output_mips_instruction(InterCodes irs, FILE* fp) {
             } else if (strcmp(ir->relop, ">") == 0) {
                 tmp = "bgt";
             } else if (strcmp(ir->relop, "<") == 0) {
-                tmp = "bgt";
+                tmp = "blt";
             } else if (strcmp(ir->relop, ">=") == 0) {
                 tmp = "bge";
             } else if (strcmp(ir->relop, "<=") == 0) {
                 tmp = "ble";
             }
-            fprintf(fp, "  %s $%d $%d label%d\n", tmp, reg(ir->x), reg(ir->y),
-                    ir->z->u.label_no);
+            reg_pop_x();
+            reg_pop_y();
+            fprintf(fp, "  %s $t1 $t2 label%d\n", tmp, ir->z->u.label_no);
             break;
         default:
-            assert(0);
+            // assert(0);
             break;
     }
 }
