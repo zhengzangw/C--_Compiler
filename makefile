@@ -11,7 +11,7 @@ CI = ./CI4C--_Compiler/autotest.sh
 CC = gcc
 FLEX = flex
 BISON = bison
-CFLAGS = -std=c99 -g -Werror -fsanitize=address
+CFLAGS = -std=c99 -g -Werror
 
 CFILES = $(shell find $(SRC)/ -name "*.c")
 OBJS = $(CFILES:.c=.o)
